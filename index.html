@@ -14,25 +14,70 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0f1115">
 <link rel="icon" href="https://charts.flashalpha.com/flashalpha-logo.png">
+<link rel="alternate" type="text/plain" title="llms.txt" href="https://flashalpha-lab.github.io/tradingview-gex-flashalpha/llms.txt">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "TradingView GEX by FlashAlpha",
-  "url": "https://flashalpha-lab.github.io/tradingview-gex-flashalpha/",
-  "applicationCategory": "FinanceApplication",
-  "operatingSystem": "Any (web browser)",
-  "description": "Live candlestick chart with options gamma exposure (GEX) indicators: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, strike heatmap and GEX profile, from the FlashAlpha options analytics API.",
-  "publisher": { "@type": "Organization", "name": "FlashAlpha", "url": "https://flashalpha.com" },
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free FlashAlpha plan available; GEX indicators start on the Basic plan." }
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://flashalpha-lab.github.io/tradingview-gex-flashalpha/#app",
+      "name": "TradingView GEX by FlashAlpha",
+      "url": "https://flashalpha-lab.github.io/tradingview-gex-flashalpha/",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any (web browser)",
+      "description": "Live candlestick chart with options gamma exposure (GEX) indicators: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, strike heatmap and GEX profile, from the FlashAlpha options analytics API.",
+      "image": "https://raw.githubusercontent.com/FlashAlpha-lab/tradingview-gex-flashalpha/main/assets/gex-levels-walls-gamma-flip.png",
+      "publisher": { "@id": "https://flashalpha.com/#organization" },
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free FlashAlpha plan available; GEX indicators start on the Basic plan." }
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "@id": "https://flashalpha-lab.github.io/tradingview-gex-flashalpha/#code",
+      "name": "tradingview-gex-flashalpha",
+      "description": "Open-source JavaScript chart that draws options gamma exposure (GEX) levels on TradingView Lightweight Charts: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, strike heatmap and GEX profile.",
+      "codeRepository": "https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha",
+      "programmingLanguage": ["JavaScript", "TypeScript"],
+      "runtimePlatform": "Web browser",
+      "license": "https://opensource.org/licenses/MIT",
+      "keywords": "gamma exposure, GEX, call wall, put wall, gamma flip, max pain, 0DTE, dealer positioning, TradingView, Lightweight Charts, FlashAlpha",
+      "targetProduct": { "@id": "https://flashalpha-lab.github.io/tradingview-gex-flashalpha/#app" },
+      "author": { "@id": "https://flashalpha.com/#organization" }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://flashalpha.com/#organization",
+      "name": "FlashAlpha",
+      "url": "https://flashalpha.com",
+      "logo": "https://charts.flashalpha.com/flashalpha-logo.png",
+      "sameAs": ["https://github.com/FlashAlpha-lab"]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "Is this a TradingView Pine Script indicator?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. It is a chart you embed on your own website or app, built on TradingView's open-source Lightweight Charts library. It looks and works like a TradingView chart, but it runs outside tradingview.com and reads FlashAlpha data directly." } },
+        { "@type": "Question", "name": "Is it free?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The chart is free and open source under the MIT license. FlashAlpha data needs an API key: the free plan shows candles and volume, GEX Levels and Net GEX start on Basic, and the strike heatmap, GEX profile and 0DTE scope are on Growth. With your own data source you need no key at all." } },
+        { "@type": "Question", "name": "Which symbols and timeframes are supported?",
+          "acceptedAnswer": { "@type": "Answer", "text": "US stocks, ETFs and indices that the FlashAlpha chart API lists, such as SPX, SPY, QQQ, AAPL, MSFT and TSLA, on 1-minute, 5-minute, 15-minute, 1-hour, daily and weekly bars." } },
+        { "@type": "Question", "name": "How often do the indicators update?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Every 60 seconds while the page is visible, and in real time with the optional live WebSocket mode." } },
+        { "@type": "Question", "name": "Can I put the chart on my website?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes, with one div and one script tag, or with the npm package in your app. Use an embed key on public pages so your secret API key never reaches the browser." } }
+      ]
+    }
+  ]
 }
 </script>
 <style>
   :root { color-scheme: dark; --bg: #0b0d11; --panel: #0f1115; --line: #262a33; --text: #d6d9e0; --muted: #8a909c; --accent: #4f8cff; --err: #f84040; }
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body { margin: 0; display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; background: var(--bg); color: var(--text);
-    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  /* The header and the chart fill the first screen; the text about the chart follows below it. */
+  /* A set height (not only min-height) so the chart's percentage heights resolve; the floor keeps the 480 px chart from
+     overlapping the text below on short screens. */
+  .app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; min-height: 620px; }
   a { color: var(--accent); }
   header { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; justify-content: space-between; padding: 12px 16px;
     border-bottom: 1px solid var(--line); background: var(--panel); }
@@ -54,6 +99,18 @@
     padding: 24px 16px; text-align: center; color: var(--muted); }
   .placeholder strong { color: var(--text); font-size: 16px; }
   .placeholder.error strong { color: var(--err); }
+  .about { max-width: 920px; margin: 0 auto; padding: 28px 16px 8px; }
+  .about h2 { margin: 0 0 8px; font-size: 20px; font-weight: 600; }
+  .about h3 { margin: 24px 0 6px; font-size: 15px; font-weight: 600; }
+  .about p, .about li { color: var(--text); }
+  .about ul { margin: 0; padding-left: 20px; }
+  .about li { margin: 4px 0; }
+  .about .plan { color: var(--muted); }
+  .about pre { margin: 8px 0; padding: 12px; overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; }
+  .about code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+  .about dt { margin-top: 12px; font-weight: 600; }
+  .about dd { margin: 2px 0 0; }
   footer { padding: 8px 16px 14px; color: var(--muted); font-size: 12px; }
   footer nav { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 4px; }
   @media (max-width: 640px) {
@@ -64,6 +121,7 @@
 </style>
 </head>
 <body>
+<div class="app">
 <header>
   <a class="brand" href="https://flashalpha.com/?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha" target="_blank" rel="noopener">
     <img src="https://charts.flashalpha.com/flashalpha-logo.png" alt="FlashAlpha">
@@ -84,6 +142,82 @@
     </div>
   </div>
 </main>
+</div>
+
+<section class="about" aria-labelledby="about-title">
+  <h2 id="about-title">Options gamma exposure (GEX) on a TradingView-style chart</h2>
+  <p><strong>TradingView GEX by FlashAlpha</strong> is an open-source JavaScript chart that draws options gamma exposure
+    (GEX) indicators on the candles: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, a strike heatmap and
+    a GEX profile. It is built on TradingView Lightweight Charts™ and reads data from the
+    <a href="https://flashalpha.com/?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha">FlashAlpha</a>
+    options analytics API. The chart is free under the MIT license; the data needs a FlashAlpha API key.
+    The source code is on <a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha">GitHub</a>.</p>
+
+  <h3>Indicators</h3>
+  <ul>
+    <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-levels.md">GEX Levels</a>:
+      call wall, put wall, gamma flip, max pain and the 0DTE magnet, drawn bar by bar, with the gamma regime tint behind the candles.
+      <span class="plan">Basic plan.</span></li>
+    <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/net-gex.md">Net GEX</a>:
+      net dealer gamma exposure in dollars, in a pane under the price. <span class="plan">Basic plan.</span></li>
+    <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-by-strike.md">GEX by strike</a>:
+      a strike heatmap behind the candles and a GEX profile at the right edge, with GEX, DEX, VEX and CHEX lenses.
+      <span class="plan">Growth plan.</span></li>
+    <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/metrics-pane.md">Greeks and 0DTE metrics</a>:
+      delta, vanna or charm exposure, or a 0DTE metric such as the pin score, IV ratio, VIX or dealer hedge per ±1 %.
+      <span class="plan">Basic (Greeks), Growth (metrics).</span></li>
+    <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/0dte-and-live-oi.md">0DTE scope and live open interest</a>:
+      the same indicators on today's expiry only, or on open interest updated with today's flow.
+      <span class="plan">Growth (0DTE), Alpha (live OI).</span></li>
+  </ul>
+
+  <h3>Add the chart to your site</h3>
+  <pre><code>&lt;div data-flashalpha-chart data-symbol="SPY" data-resolution="5m"
+     data-layers="levels,maxpain,netgex" style="height: 520px"&gt;&lt;/div&gt;
+
+&lt;script async src="https://charts.flashalpha.com/embed.js" data-key="YOUR_FLASHALPHA_API_KEY"&gt;&lt;/script&gt;</code></pre>
+  <p>In an app, install it from npm with <code>npm install tradingview-gex-flashalpha</code>, next to its peer dependency
+    TradingView Lightweight Charts 5.3.0.
+    On a public page, use an <a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/embed-keys.md">embed key</a>
+    so your secret API key never reaches the browser. All options are in the
+    <a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha#readme">README</a> and the
+    <a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/api.md">chart API reference</a>.</p>
+
+  <h3>FAQ</h3>
+  <dl>
+    <dt>Is this a TradingView Pine Script indicator?</dt>
+    <dd>No. It is a chart you embed on your own website or app, built on TradingView's open-source Lightweight Charts™ library.
+      It looks and works like a TradingView chart, but it runs outside tradingview.com and reads FlashAlpha data directly.</dd>
+    <dt>Is it free?</dt>
+    <dd>The chart is free and open source under the MIT license. FlashAlpha data needs an API key: the free plan shows candles and
+      volume, GEX Levels and Net GEX start on Basic, and the strike heatmap, GEX profile and 0DTE scope are on Growth. With your
+      own data source you need no key at all. See <a href="https://flashalpha.com/pricing?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha">plans and pricing</a>.</dd>
+    <dt>Which symbols and timeframes are supported?</dt>
+    <dd>US stocks, ETFs and indices that the FlashAlpha chart API lists, such as SPX, SPY, QQQ, AAPL, MSFT and TSLA, on 1-minute,
+      5-minute, 15-minute, 1-hour, daily and weekly bars.</dd>
+    <dt>How often do the indicators update?</dt>
+    <dd>Every 60 seconds while the page is visible, and in real time with the optional live WebSocket mode.</dd>
+    <dt>Can I put the chart on my website?</dt>
+    <dd>Yes, with one div and one script tag, or with the npm package in your app. Use an embed key on public pages so your
+      secret API key never reaches the browser.</dd>
+  </dl>
+
+  <h3>More from FlashAlpha</h3>
+  <ul>
+    <li><a href="https://flashalpha.com/docs/lab-api-overview?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha">FlashAlpha API docs</a>:
+      the options analytics API behind the chart.</li>
+    <li><a href="https://flashalpha.com/docs/lab-api-exposure?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha">GEX exposure API</a>:
+      GEX, DEX, VEX and CHEX by strike, key levels and the exposure summary.</li>
+    <li><a href="https://flashalpha.com/tools/gamma-exposure?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha">Free GEX tool</a>:
+      gamma exposure by strike in the browser.</li>
+    <li><a href="https://github.com/FlashAlpha-lab/flashalpha-js">flashalpha-js</a>: JavaScript and TypeScript SDK.</li>
+    <li><a href="https://github.com/FlashAlpha-lab/flashalpha-python">flashalpha-python</a>: Python SDK.</li>
+    <li><a href="https://github.com/FlashAlpha-lab/flashalpha-mcp">flashalpha-mcp</a>: MCP server for Claude, Cursor and other AI assistants.</li>
+    <li><a href="https://github.com/FlashAlpha-lab/gex-explained">gex-explained</a>: the theory and math behind GEX.</li>
+    <li><a href="https://github.com/FlashAlpha-lab/awesome-options-analytics">awesome-options-analytics</a>: options analytics resources.</li>
+    <li><a href="https://flashalpha-lab.github.io/tradingview-gex-flashalpha/llms.txt">llms.txt</a>: a summary of this project for AI assistants.</li>
+  </ul>
+</section>
 
 <footer>
   <nav>

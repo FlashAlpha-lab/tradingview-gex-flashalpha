@@ -879,6 +879,7 @@ that data on a price chart.
 - [Free GEX tool](https://flashalpha.com/tools/gamma-exposure?utm_source=github&utm_medium=readme&utm_campaign=tradingview-gex-flashalpha)
 - [flashalpha-js](https://github.com/FlashAlpha-lab/flashalpha-js): JavaScript and TypeScript SDK.
 - [flashalpha-python](https://github.com/FlashAlpha-lab/flashalpha-python): Python SDK.
+- [flashalpha-mcp](https://github.com/FlashAlpha-lab/flashalpha-mcp): MCP server for Claude, Cursor and other AI assistants.
 - [gex-explained](https://github.com/FlashAlpha-lab/gex-explained): the theory and math behind GEX.
 - [awesome-options-analytics](https://github.com/FlashAlpha-lab/awesome-options-analytics): options analytics resources.
 

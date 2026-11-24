@@ -31,3 +31,7 @@ Plans: Free = candles and volume. Basic = GEX Levels (call wall, put wall, gamma
 - [Pricing and free API key](https://flashalpha.com/pricing)
 - [Free GEX tool](https://flashalpha.com/tools/gamma-exposure)
 - [gex-explained](https://github.com/FlashAlpha-lab/gex-explained): theory and math behind GEX
+- [flashalpha-js](https://github.com/FlashAlpha-lab/flashalpha-js): JavaScript and TypeScript SDK for the FlashAlpha API
+- [flashalpha-python](https://github.com/FlashAlpha-lab/flashalpha-python): Python SDK for the FlashAlpha API
+- [flashalpha-mcp](https://github.com/FlashAlpha-lab/flashalpha-mcp): MCP server for Claude, Cursor and other AI assistants
+- [awesome-options-analytics](https://github.com/FlashAlpha-lab/awesome-options-analytics): options analytics resources
