@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TradingView GEX by FlashAlpha: live gamma exposure chart</title>
+<meta name="description" content="Live TradingView-style candlestick chart with options gamma exposure (GEX) indicators: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, strike heatmap and GEX profile. Enter your FlashAlpha API key to view the chart.">
+<link rel="canonical" href="https://flashalpha-lab.github.io/tradingview-gex-flashalpha/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="TradingView GEX by FlashAlpha: live gamma exposure chart">
+<meta property="og:description" content="Call wall, put wall, gamma flip, max pain, net GEX and GEX by strike on a live candlestick chart, from the FlashAlpha options API.">
+<meta property="og:url" content="https://flashalpha-lab.github.io/tradingview-gex-flashalpha/">
+<meta property="og:image" content="https://raw.githubusercontent.com/FlashAlpha-lab/tradingview-gex-flashalpha/main/assets/gex-levels-walls-gamma-flip.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0f1115">
+<link rel="icon" href="https://charts.flashalpha.com/flashalpha-logo.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "TradingView GEX by FlashAlpha",
+  "url": "https://flashalpha-lab.github.io/tradingview-gex-flashalpha/",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Any (web browser)",
+  "description": "Live candlestick chart with options gamma exposure (GEX) indicators: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, strike heatmap and GEX profile, from the FlashAlpha options analytics API.",
+  "publisher": { "@type": "Organization", "name": "FlashAlpha", "url": "https://flashalpha.com" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free FlashAlpha plan available; GEX indicators start on the Basic plan." }
+}
+</script>
+<style>
+  :root { color-scheme: dark; --bg: #0b0d11; --panel: #0f1115; --line: #262a33; --text: #d6d9e0; --muted: #8a909c; --accent: #4f8cff; --err: #f84040; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; background: var(--bg); color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--accent); }
+  header { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; justify-content: space-between; padding: 12px 16px;
+    border-bottom: 1px solid var(--line); background: var(--panel); }
+  .brand { display: flex; gap: 10px; align-items: center; min-width: 0; color: inherit; text-decoration: none; }
+  .brand img { width: 28px; height: 28px; flex: none; }
+  .brand h1 { margin: 0; font-size: 16px; font-weight: 600; white-space: nowrap; }
+  .brand span { color: var(--muted); font-size: 12px; }
+  form { display: flex; gap: 8px; align-items: center; flex: 1 1 360px; max-width: 520px; }
+  form input { flex: 1; min-width: 0; height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg);
+    color: inherit; font: inherit; }
+  form input:focus { outline: none; border-color: var(--accent); }
+  form button { flex: none; height: 36px; padding: 0 18px; border: 0; border-radius: 8px; background: var(--accent); color: #fff;
+    font: inherit; font-weight: 600; cursor: pointer; }
+  form button:hover { filter: brightness(1.1); }
+  form button:disabled { opacity: .6; cursor: default; }
+  main { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 12px 16px; }
+  #chart { flex: 1; min-height: 480px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+  .placeholder { height: 100%; min-height: 480px; display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center;
+    padding: 24px 16px; text-align: center; color: var(--muted); }
+  .placeholder strong { color: var(--text); font-size: 16px; }
+  .placeholder.error strong { color: var(--err); }
+  footer { padding: 8px 16px 14px; color: var(--muted); font-size: 12px; }
+  footer nav { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 4px; }
+  @media (max-width: 640px) {
+    form { flex-basis: 100%; max-width: none; }
+    .brand span { display: none; }
+    main { padding: 8px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="https://flashalpha.com/?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha" target="_blank" rel="noopener">
+    <img src="https://charts.flashalpha.com/flashalpha-logo.png" alt="FlashAlpha">
+    <div><h1>TradingView GEX by FlashAlpha</h1><span>Gamma exposure levels on a live chart</span></div>
+  </a>
+  <form id="connect" autocomplete="off">
+    <input id="apiKey" type="password" placeholder="Enter your FlashAlpha API key" aria-label="FlashAlpha API key" spellcheck="false" autocapitalize="off">
+    <button id="connectBtn" type="submit">Connect</button>
+  </form>
+</header>
+
+<main>
+  <div id="chart">
+    <div class="placeholder" id="placeholder">
+      <strong>Enter your FlashAlpha API key and press Connect to view the chart.</strong>
+      <span>No key yet? <a href="https://flashalpha.com/pricing?utm_source=github&utm_medium=chart_page&utm_campaign=get_api_key" target="_blank" rel="noopener">Create a free FlashAlpha account</a>, then copy your key from your <a href="https://flashalpha.com/profile?utm_source=github&utm_medium=chart_page&utm_campaign=get_api_key" target="_blank" rel="noopener">profile</a>.</span>
+      <span>Your key stays in this browser tab and is sent only to the FlashAlpha chart API.</span>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <nav>
+    <a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha#indicators-at-a-glance">Indicators</a>
+    <a href="https://flashalpha.com/pricing?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha" target="_blank" rel="noopener">Plans and pricing</a>
+    <a href="https://flashalpha.com/docs?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha" target="_blank" rel="noopener">API docs</a>
+    <a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha">GitHub</a>
+  </nav>
+  GEX levels are model estimates from options open interest, not investment advice. Built on TradingView Lightweight Charts™;
+  TradingView is a trademark of TradingView, Inc. This page is not affiliated with TradingView.
+</footer>
+
+<!-- Loads Lightweight Charts, the chart and the FlashAlpha indicators from the FlashAlpha chart host. -->
+<script src="https://charts.flashalpha.com/embed.js"></script>
+<script>
+(function () {
+  'use strict';
+  var CHART_API = 'https://charts.flashalpha.com';
+  var KEY_STORE = 'tradingview-gex-flashalpha:key';
+  var PRICING = 'https://flashalpha.com/pricing?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha';
+  var $ = function (id) { return document.getElementById(id); };
+  var chartEl = $('chart'), input = $('apiKey'), button = $('connectBtn');
+  var chart = null;
+
+  // The key is kept for this tab only (sessionStorage): a reload keeps the chart, closing the tab forgets the key.
+  var session = {
+    get: function () { try { return sessionStorage.getItem(KEY_STORE) || ''; } catch (e) { return ''; } },
+    set: function (v) { try { sessionStorage.setItem(KEY_STORE, v); } catch (e) { /* storage blocked */ } }
+  };
+
+  function message(title, text, isError) {
+    chartEl.innerHTML = '';
+    var box = document.createElement('div');
+    box.className = 'placeholder' + (isError ? ' error' : '');
+    var strong = document.createElement('strong');
+    strong.textContent = title;
+    box.appendChild(strong);
+    if (text) { var span = document.createElement('span'); span.textContent = text; box.appendChild(span); }
+    chartEl.appendChild(box);
+  }
+
+  // embed.js loads the libraries once; FlashAlphaEmbed.scan() resolves when they are ready.
+  var ready = window.FlashAlphaEmbed
+    ? window.FlashAlphaEmbed.scan().then(function () { if (!window.FlashAlphaChart) throw new Error('chart not loaded'); })
+    : Promise.reject(new Error('embed.js not loaded'));
+
+  function connect(key) {
+    button.disabled = true;
+    message('Loading the chart…');
+    ready.then(function () {
+      if (chart) { chart.destroy(); chart = null; }
+      chartEl.innerHTML = '';
+      chart = window.FlashAlphaChart.mount(chartEl, {
+        apiKey: key,
+        baseUrl: CHART_API,
+        symbol: 'SPY',
+        resolution: '5m',
+        theme: 'dark',
+        layers: ['levels', 'maxpain', 'netgex'],
+        storageKey: 'tradingview-gex-flashalpha:layers',
+        upgradeUrl: PRICING,
+        signupUrl: PRICING,
+        brand: { logo: CHART_API + '/flashalpha-logo.png', href: 'https://flashalpha.com/?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha', name: 'FlashAlpha' }
+      });
+    }).catch(function () {
+      message('The chart could not load.', 'Check your internet connection or ad blocker, then press Connect again.', true);
+    }).then(function () { button.disabled = false; });
+  }
+
+  $('connect').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var key = input.value.trim();
+    if (!key) { input.focus(); message('Enter your FlashAlpha API key first.', 'You can copy it from your FlashAlpha profile.', true); return; }
+    session.set(key);
+    connect(key);
+  });
+
+  var saved = session.get();
+  if (saved) { input.value = saved; connect(saved); }
+})();
+</script>
+</body>
+</html>

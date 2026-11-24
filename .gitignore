@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.tgz
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# a local copy of an example with a real key (never commit a key)
+examples/*.local.html
+examples/*.local.js

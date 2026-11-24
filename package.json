@@ -1,0 +1,99 @@
+{
+  "name": "tradingview-gex-flashalpha",
+  "version": "1.0.0",
+  "description": "TradingView-style candlestick chart with options gamma exposure (GEX) levels: call wall, put wall, gamma flip, max pain, plus FlashAlpha indicators such as net GEX, the strike heatmap and the GEX profile. Built on TradingView Lightweight Charts, data from the FlashAlpha API.",
+  "keywords": [
+    "options",
+    "gamma-exposure",
+    "gex",
+    "dealer-positioning",
+    "call-wall",
+    "put-wall",
+    "gamma-flip",
+    "max-pain",
+    "candlestick-chart",
+    "lightweight-charts",
+    "embeddable-chart",
+    "stock-chart",
+    "trading",
+    "gex-chart",
+    "options-chart",
+    "options-analytics",
+    "charting-library",
+    "gamma-exposure-chart",
+    "dealer-gamma",
+    "tradingview",
+    "javascript-chart",
+    "0dte",
+    "tradingview-gex",
+    "flashalpha",
+    "flashalpha-api",
+    "net-gex",
+    "gex-heatmap"
+  ],
+  "homepage": "https://flashalpha-lab.github.io/tradingview-gex-flashalpha/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha.git"
+  },
+  "bugs": {
+    "url": "https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/issues"
+  },
+  "author": "FlashAlpha (https://flashalpha.com)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/tradingview-gex-flashalpha.cjs",
+  "module": "./dist/tradingview-gex-flashalpha.mjs",
+  "types": "./types/index.d.ts",
+  "unpkg": "./dist/tradingview-gex-flashalpha.min.js",
+  "jsdelivr": "./dist/tradingview-gex-flashalpha.min.js",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./dist/tradingview-gex-flashalpha.mjs",
+      "require": "./dist/tradingview-gex-flashalpha.cjs"
+    },
+    "./style.css": "./dist/tradingview-gex-flashalpha.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "!dist/vendor",
+    "types",
+    "embed.js",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "*.css",
+    "./dist/tradingview-gex-flashalpha.js",
+    "./dist/tradingview-gex-flashalpha.min.js"
+  ],
+  "peerDependencies": {
+    "lightweight-charts": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test test/*.test.js",
+    "lint:source": "node scripts/check-source.mjs",
+    "lint:types": "tsc --noEmit --strict --lib es2020,dom --module esnext --moduleResolution bundler types/index.d.ts test/types-usage.ts",
+    "check": "npm run lint:source && npm run lint:types && npm run build && npm test && npm pack --dry-run",
+    "prepublishOnly": "npm run check"
+  },
+  "devDependencies": {
+    "acorn": "^8.19.0",
+    "esbuild": "^0.28.2",
+    "jsdom": "^26.1.0",
+    "lightningcss": "^1.33.0",
+    "lightweight-charts": "5.3.0",
+    "typescript": "^5.9.3"
+  }
+}

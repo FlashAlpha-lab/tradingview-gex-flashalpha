@@ -1,0 +1,33 @@
+# TradingView GEX by FlashAlpha
+
+> TradingView GEX by FlashAlpha (GitHub: FlashAlpha-lab/tradingview-gex-flashalpha) draws options gamma exposure (GEX) on a TradingView-style candlestick chart built on TradingView Lightweight Charts: call wall, put wall, gamma flip, max pain, 0DTE magnet, gamma regime, net GEX, a strike heatmap, a GEX profile, delta / vanna / charm exposure and 0DTE metrics such as the pin score. Data comes from the FlashAlpha options analytics API and needs a FlashAlpha API key. It is not a TradingView Pine Script indicator: it is a chart you embed on your own website or app.
+
+Embed in one line: `<div data-flashalpha-chart data-symbol="SPY" data-layers="levels,maxpain,netgex" style="height:520px"></div>` plus `<script async src="https://charts.flashalpha.com/embed.js" data-key="YOUR_FLASHALPHA_API_KEY"></script>`. Layer IDs: `levels` (call wall, put wall, gamma flip), `maxpain`, `magnet` (0DTE magnet), `netgex`, `heatmap`, `profile`. npm: `npm install tradingview-gex-flashalpha lightweight-charts@5.3.0`, then `import { mount } from 'tradingview-gex-flashalpha'` and `mount(el, { lightweightCharts, baseUrl: 'https://charts.flashalpha.com', apiKey, symbol: 'SPX', layers: ['levels', 'maxpain'] })`; the npm package draws the core layers `levels` and `maxpain`, the other layers come from the chart host (embed, or the script build plus https://charts.flashalpha.com/flashalpha-chart-layers.js). Symbols: US stocks, ETFs and indices such as SPX, SPY, QQQ, AAPL, MSFT, TSLA. Intervals: 1m, 5m, 15m, 1h, 1d, 1w.
+
+Plans: Free = candles and volume. Basic = GEX Levels (call wall, put wall, gamma flip, max pain, 0DTE magnet), Net GEX pane, delta / vanna / charm exposure panes. Growth = Basic plus strike heatmap, GEX profile with GEX / DEX / VEX / CHEX lenses, 0DTE scope, 0DTE and volatility metrics. Alpha = Growth plus live open interest. Levels are model estimates from open interest, not financial advice.
+
+## Indicators
+
+- [Overview and FAQ](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha#readme): all indicators, benefits, plans, embed, FAQ
+- [GEX Levels](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-levels.md): call wall, put wall, gamma flip, max pain, 0DTE magnet, regime tint, broken walls
+- [Net GEX](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/net-gex.md): net dealer gamma exposure in dollars under the price
+- [GEX by strike](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-by-strike.md): strike heatmap and GEX profile, GEX / DEX / VEX / CHEX lenses
+- [Greeks and 0DTE metrics](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/metrics-pane.md): delta, vanna, charm, 0DTE pin score, IV ratio, VIX, dealer hedge per 1 %
+- [0DTE scope and live OI](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/0dte-and-live-oi.md): same-day expiry levels and live open interest
+
+## Repository
+
+- [GitHub repository](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha)
+- [Live demo](https://flashalpha-lab.github.io/tradingview-gex-flashalpha/)
+- [npm package](https://www.npmjs.com/package/tradingview-gex-flashalpha)
+- [Embed example](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/examples/embed.html)
+- [Chart API reference](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/api.md)
+- [Issues](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/issues)
+
+## FlashAlpha
+
+- [FlashAlpha API docs](https://flashalpha.com/docs)
+- [Exposure API (GEX)](https://flashalpha.com/docs/lab-api-exposure)
+- [Pricing and free API key](https://flashalpha.com/pricing)
+- [Free GEX tool](https://flashalpha.com/tools/gamma-exposure)
+- [gex-explained](https://github.com/FlashAlpha-lab/gex-explained): theory and math behind GEX

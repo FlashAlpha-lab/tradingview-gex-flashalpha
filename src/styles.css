@@ -1,0 +1,248 @@
+.fac { position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 240px;
+  background: var(--fac-bg, #0f1115); color: var(--fac-text, #d6d9e0); font: 12px/1.4 system-ui, -apple-system, Segoe UI, sans-serif; }
+.fac a.fac-lock, .fac-grp a.fac-lock { display: flex; gap: 6px; align-items: center; padding: 4px 6px; border-radius: 4px; color: var(--fac-muted, #8a909c);
+  text-decoration: none; white-space: nowrap; }
+.fac a.fac-lock:hover, .fac-grp a.fac-lock:hover { background: var(--fac-line, #262a33); color: var(--fac-text, #d6d9e0); }
+.fac-lock .plan, .fac-upsell .plan { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: var(--fac-accent, #4f8cff); color: #fff; }
+.fac-more { display: none; flex-direction: column; gap: 6px; padding: 6px 6px 2px; margin-top: 4px; border-top: 1px solid var(--fac-line, #262a33); }
+.fac-more:not(:empty) { display: flex; }
+.fac-more select { max-width: none; }
+.fac-upsell { position: absolute; right: 64px; top: 6px; z-index: 5; display: flex; gap: 8px; align-items: center; padding: 4px 6px 4px 10px;
+  border: 1px solid var(--fac-line, #262a33); border-radius: 6px; background: var(--fac-bg, #0f1115); color: var(--fac-text, #d6d9e0);
+  box-shadow: 0 2px 10px var(--fac-shadow, rgba(0,0,0,0.4)); }
+.fac-upsell[hidden] { display: none; }
+.fac-upsell a { padding: 3px 10px; border-radius: 4px; background: var(--fac-accent, #4f8cff); color: #fff; text-decoration: none; font-weight: 600; }
+.fac-narrow .fac-upsell { left: 8px; right: auto; top: auto; bottom: 34px; }
+.fac-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--fac-line, #262a33); }
+.fac-timebar { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; padding: 3px 8px; border-top: 1px solid var(--fac-line, #262a33); }
+.fac-timebar .fac-group { border: 0; padding: 0; }
+.fac-spacer { flex: 1; }
+.fac-clock { color: var(--fac-muted, #8a909c); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fac-narrow .fac-clock { display: none; }
+.fac-group { display: flex; gap: 2px; border: 1px solid var(--fac-line, #262a33); border-radius: 6px; padding: 2px; }
+.fac-group button, .fac-menu > button { background: none; border: 0; color: var(--fac-muted, #8a909c); padding: 3px 8px; border-radius: 4px; cursor: pointer; font: inherit; }
+.fac-group button:hover, .fac-menu > button:hover { color: var(--fac-text, #d6d9e0); }
+.fac select option, .fac-grp select option { background: var(--fac-bg, #0f1115); color: var(--fac-text, #d6d9e0); }
+.fac-group button.on { background: var(--fac-accent, #4f8cff); color: #fff; }
+.fac select, .fac-grp select { background: transparent; color: inherit; border: 1px solid var(--fac-line, #262a33); border-radius: 6px; padding: 3px 4px; font: inherit;
+  max-width: 170px; }
+.fac-menu { position: relative; border: 1px solid var(--fac-line, #262a33); border-radius: 6px; }
+.fac-menu > button { color: var(--fac-text, #d6d9e0); }
+.fac-panel { display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 10; min-width: 190px; padding: 6px;
+  background: var(--fac-bg, #0f1115); border: 1px solid var(--fac-line, #262a33); border-radius: 6px; box-shadow: 0 6px 24px rgba(0,0,0,0.4); }
+.fac-menu.open .fac-panel { display: block; }
+.fac-panel label { display: flex; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+.fac-panel label:hover { background: var(--fac-line, #262a33); }
+.fac-status { color: var(--fac-muted, #8a909c); }
+.fac-body { position: relative; flex: 1; min-height: 0; }
+.fac-canvas { position: absolute; inset: 0; }
+.fac-legend { position: absolute; top: 6px; left: 10px; z-index: 3; pointer-events: none; font-variant-numeric: tabular-nums; }
+.fac-legend b { font-size: 14px; margin-right: 6px; }
+.fac-legend .k { color: var(--fac-muted, #8a909c); margin-left: 6px; }
+.fac-legend .up { color: #26a69a; } .fac-legend .dn { color: #ef5350; }
+.fac-legend .sub { color: var(--fac-muted, #8a909c); margin-top: 2px; }
+.fac-empty { position: absolute; inset: 0; z-index: 4; display: none; align-items: center; justify-content: center; text-align: center;
+  padding: 16px; color: var(--fac-muted, #8a909c); background: var(--fac-bg, #0f1115); }
+.fac-empty.fac-gate { padding: 0; overflow: hidden; }
+.fac-gate-bg { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(6px); opacity: 0.35; pointer-events: none; }
+.fac-gate-box { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 16px; overflow: auto; background: var(--fac-shade, rgba(15,17,21,0.6)); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.fac-gate-box > svg { width: 40px; height: 40px; flex: none; margin-bottom: 12px; color: var(--fac-muted, #8a909c); }
+.fac-gate-ttl { margin: 0 0 4px; font-size: 16px; font-weight: 600; line-height: 1.4; color: var(--fac-text, #d6d9e0); }
+.fac-gate-txt { margin: 0 0 16px; max-width: 384px; font-size: 13px; line-height: 1.5; color: var(--fac-muted, #8a909c); }
+.fac-gate-cta { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  text-decoration: none; color: #fff; background: var(--fac-accent, #4f8cff); box-shadow: 0 8px 20px -6px rgba(79,140,255,0.45); }
+.fac-gate-cta:hover { filter: brightness(1.1); }
+.fac-gate-cta svg { width: 16px; height: 16px; }
+.fac-narrow .fac-gate-ttl { font-size: 14px; }
+.fac-narrow .fac-gate-txt { font-size: 12px; margin-bottom: 12px; }
+.fac-narrow .fac-gate-box > svg { width: 32px; height: 32px; margin-bottom: 8px; }
+.fac-narrow .fac-status { display: none; }
+.fac-narrow .fac-group button, .fac-narrow .fac-menu > button { min-height: 32px; min-width: 32px; padding: 3px 7px; }
+.fac-credit { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 10px 4px; font-size: 10px; }
+.fac-credit a { color: var(--fac-muted, #8a909c); text-decoration: none; }
+.fac-credit a:hover { text-decoration: underline; }
+.fac-body > .fac-brand { position: absolute; left: 10px; bottom: 34px; z-index: 3; display: flex; align-items: center; gap: 5px;
+  color: var(--fac-text, #d6d9e0); font: 600 12px/1 system-ui, sans-serif; text-decoration: none; opacity: 0.55; }
+.fac-body > .fac-brand:hover { opacity: 1; }
+.fac-body > .fac-brand img { height: 16px; }
+.fac-narrow .fac-body > .fac-brand span { display: none; }
+.fac select, .fac select option, .fac select optgroup, .fac-grp select, .fac-grp select option, .fac-grp select optgroup { background-color: var(--fac-bg, #0f1115); color: var(--fac-text, #d6d9e0); }
+.fac-panel .fac-field { display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding: 2px 6px; color: var(--fac-muted, #8a909c); font-size: 11px; cursor: default; white-space: normal; }
+.fac-panel .fac-field:hover { background: none; }
+.fac-field select { width: 100%; max-width: none; color: var(--fac-text, #d6d9e0); }
+.fac-panel { min-width: 230px; }
+.fac-credit .fac-brand { display: flex; align-items: center; gap: 5px; color: var(--fac-text, #d6d9e0); font: 600 12px/1 system-ui, sans-serif;
+  opacity: 0.8; }
+.fac-credit .fac-brand:hover { opacity: 1; text-decoration: none; }
+.fac-brand img { height: 16px; width: auto; }
+.fac-note { flex: 1; min-width: 0; text-align: center; color: var(--fac-muted, #8a909c); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fac-narrow .fac-note { white-space: normal; text-overflow: clip; line-height: 1.3; }
+.fac-empty.fac-loading { background: transparent; pointer-events: none; }
+/* a layer turned on or off waiting for the API: shown after 0.2 s, so a quick answer does not flash it */
+.fac-busy { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 5; padding: 2px 10px; border-radius: 10px;
+  border: 1px solid var(--fac-line, #262a33); background: var(--fac-bg, #0f1115); color: var(--fac-muted, #8a909c); font-size: 12px;
+  pointer-events: none; opacity: 0; transition: opacity .15s; }
+.fac-busy.on { opacity: 1; transition-delay: .2s; }
+.fac-upsell .pitch { color: var(--fac-muted, #8a909c); max-width: 260px; }
+.fac-narrow .fac-upsell .pitch { display: none; }
+.fac-panel { overflow-y: auto; }
+.fac-dd-btn { display: inline-flex; align-items: center; gap: 5px; }
+.fac-dd-btn svg { width: 16px; height: 16px; color: var(--fac-muted, #8a909c); }
+.fac-dd-btn b { font-weight: 700; }
+.fac-menu.open > button, .fac-dd-btn:hover { background: var(--fac-line, #262a33); }
+.fac-menu.open .fac-sym-panel { display: flex; flex-direction: column; }
+.fac-sym-panel { width: 250px; min-width: 0; overflow: hidden; }
+.fac-dd .fac-panel:not(.fac-sym-panel) { min-width: 150px; }
+.fac-search { box-sizing: border-box; width: 100%; margin-bottom: 4px; padding: 5px 8px; background: transparent; color: inherit;
+  border: 1px solid var(--fac-line, #262a33); border-radius: 4px; font: inherit; outline: none; }
+.fac-search:focus { border-color: var(--fac-accent, #4f8cff); }
+.fac-list { flex: 1; min-height: 0; max-height: 280px; overflow-y: auto; }
+.fac-opt { display: flex; justify-content: space-between; gap: 14px; padding: 5px 8px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+.fac-opt:hover, .fac-opt.active { background: var(--fac-line, #262a33); }
+.fac-opt.on { color: var(--fac-accent, #4f8cff); font-weight: 600; }
+.fac-hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--fac-muted, #8a909c); font-weight: 400; }
+.fac-none { padding: 6px 8px; color: var(--fac-muted, #8a909c); }
+.fac-right { display: flex; align-items: center; gap: 2px; }
+.fac-right .fac-menu { border: 0; }
+.fac-icon { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 28px; padding: 0; border: 0;
+  border-radius: 4px; background: none; color: var(--fac-muted, #8a909c); cursor: pointer; }
+.fac-menu > button.fac-icon { padding: 0; color: var(--fac-muted, #8a909c); }
+.fac-icon:hover, .fac-menu.open > button.fac-icon { background: var(--fac-line, #262a33); color: var(--fac-text, #d6d9e0); }
+.fac-icon[hidden], .fac-account[hidden] { display: none; }
+.fac-ttl { padding: 2px 6px 6px; font-weight: 600; }
+.fac-feed { margin-left: 6px; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.fac-feed[hidden] { display: none; }
+.fac-delayed { background: rgba(217, 119, 6, 0.15); color: #d97706; }
+.fac-live { background: rgba(38, 166, 154, 0.15); color: #26a69a; }
+.fac-account { margin-left: 6px; padding: 4px 12px; border-radius: 6px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.fac-signup { background: var(--fac-accent, #4f8cff); color: #fff; }
+.fac-signup:hover { filter: brightness(1.1); }
+.fac-tier { border: 1px solid var(--fac-line, #262a33); color: var(--fac-text, #d6d9e0); }
+.fac-tier:hover { border-color: var(--fac-accent, #4f8cff); }
+.fac-nolegend .fac-legend, .fac-nolegend .fac-pane-lgs { display: none; }
+.fac-fullscreen { width: 100vw; height: 100vh; }
+.fac-narrow .fac-icon { width: 32px; height: 32px; }
+.fac-narrow .fac-account { margin-left: 2px; padding: 4px 8px; }
+.fac-narrow .fac-feed { margin-left: 2px; padding: 2px 6px; font-size: 11px; }
+.fac-narrow .fac-sym-panel { width: 220px; }
+.fac-legend .lv { display: flex; flex-wrap: wrap; gap: 0 12px; }
+.fac-legend .lv .k { margin-left: 0; }
+.fac-legend .ch { color: var(--fac-muted, #8a909c); }
+.fac-fx { font-style: italic; font-weight: 700; font-family: Georgia, serif; margin-right: 2px; }
+.fac-ind-menu .fac-panel { min-width: 270px; }
+.fac-ind + .fac-ind { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--fac-line, #262a33); }
+.fac-ind-head { display: flex; align-items: center; gap: 4px; }
+.fac-ind-head label { flex: 1; min-width: 0; }
+.fac-ind-head b { overflow: hidden; text-overflow: ellipsis; }
+.fac-ind-head .fac-icon { width: 26px; height: 24px; flex: none; }
+.fac-ind-head .fac-icon svg, .fac-lg-btn svg { width: 15px; height: 15px; }
+.fac-ind-layers { padding-left: 22px; }
+.fac-ind-row { display: flex; align-items: center; gap: 2px; }
+.fac-ind-row > :first-child { flex: 1; min-width: 0; }
+.fac-ind-row .fac-icon { width: 26px; height: 24px; flex: none; color: var(--fac-muted, #8a909c); }
+.fac-ind-row .fac-icon svg { width: 15px; height: 15px; }
+.fac-dlg-sub { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fac-muted, #8a909c); font-size: 11px; }
+.fac-dlg-hint { margin: 0 0 4px; color: var(--fac-muted, #8a909c); font-size: 11px; }
+.fac-panel .fac-lock .plan, .fac-dialog .fac-lock .plan { margin-left: auto; }
+.fac-lg-name { color: var(--fac-text, #d6d9e0); font-weight: 600; }
+/* An indicator's title takes the pointer: its buttons (hide / show, options, remove) show on hover, like TradingView,
+   over the values right after the title (on the chart's background), so the values sit close to the title and nothing
+   moves. The title has a minimum width, so short titles line their values up. Without hover (phones) the buttons stay in
+   the line. */
+.fac-lg-head { pointer-events: auto; position: relative; display: inline-flex; align-items: center; }
+.fac-lg-head .fac-lg-name { min-width: 64px; white-space: nowrap; }
+/* The buttons touch the title (padding, no margin: no gap where the pointer would leave it) and stay a moment after the
+   pointer leaves, so moving onto them is easy. */
+.fac-lg-btns { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); z-index: 1; display: inline-flex;
+  align-items: center; gap: 4px; padding: 2px 2px 2px 6px; border-radius: 4px; background: var(--fac-bg, #0f1115);
+  visibility: hidden; transition: visibility 0s linear 0.4s; }
+.fac-lg-head:hover .fac-lg-btns, .fac-lg-head:focus-within .fac-lg-btns, .fac-lg-off .fac-lg-btns { visibility: visible; transition-delay: 0s; }
+.fac-lg-off .fac-lg-name { opacity: 0.5; }
+.fac-lg-btn { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+  padding: 0; border: 0; border-radius: 4px; background: none; color: var(--fac-muted, #8a909c); cursor: pointer; }
+.fac-lg-btn svg { width: 16px; height: 16px; }
+.fac-lg-btn:hover { background: var(--fac-line, #262a33); color: var(--fac-text, #d6d9e0); }
+/* Each plugin pane's legend, at its top left (top set from the pane heights). */
+.fac-pane-lgs { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.fac-legend.fac-pane-lg { top: 0; }
+@media (hover: none) { .fac-lg-btns { position: static; transform: none; visibility: visible; } }
+.fac-lg-note { pointer-events: auto; cursor: help; text-decoration: underline dotted; text-underline-offset: 2px; }
+/* An ⓘ in a legend line: its text shows under it on hover, and stays open after a click until a click elsewhere. */
+.fac-lg-info { pointer-events: auto; position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--fac-muted, #8a909c); cursor: help; }
+.fac-lg-info svg { width: 14px; height: 14px; }
+.fac-lg-info:hover, .fac-lg-info.fac-tip-open { color: var(--fac-text, #d6d9e0); }
+.fac-lg-info:focus { outline: none; }
+.fac-lg-info:focus-visible { outline: 1px solid var(--fac-accent, #4f8cff); }
+.fac-lg-info .fac-tip { display: none; position: absolute; top: 100%; left: 0; z-index: 5; margin-top: 6px; width: max-content;
+  max-width: 320px; padding: 8px 10px; border: 1px solid var(--fac-line, #262a33); border-radius: 6px; background: var(--fac-bg, #0f1115);
+  color: var(--fac-text, #d6d9e0); font-size: 12px; font-weight: 400; line-height: 1.45; text-align: left; white-space: pre-line;
+  box-shadow: 0 4px 14px var(--fac-shadow, rgba(0, 0, 0, 0.4)); }
+.fac-lg-info:hover .fac-tip, .fac-lg-info.fac-tip-open .fac-tip { display: block; }
+.fac-lg-info:focus-visible .fac-tip { display: block; }
+/* A colour scale in a legend line: its two ends' values either side of the gradient (hover: what it means). */
+.fac-lg-ramp { pointer-events: auto; cursor: help; display: inline-flex; align-items: center; gap: 4px; color: var(--fac-muted, #8a909c); font-size: 11px; }
+.fac-lg-ramp i { display: inline-block; width: 72px; height: 8px; border-radius: 2px; border: 1px solid var(--fac-line, #262a33); }
+.fac-dialog { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 12px;
+  background: rgba(0, 0, 0, 0.35); }
+.fac-dialog[hidden] { display: none; }
+.fac-dlg { display: flex; flex-direction: column; width: min(440px, 100%); max-height: 100%; border: 1px solid var(--fac-line, #262a33);
+  border-radius: 8px; background: var(--fac-bg, #0f1115); box-shadow: 0 10px 40px var(--fac-shadow, rgba(0,0,0,0.4)); }
+.fac-dlg-head { display: flex; align-items: center; gap: 8px; padding: 10px 10px 6px 14px; font-size: 14px; }
+.fac-dlg-head b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fac-dlg-head .fac-icon { font-size: 20px; line-height: 1; }
+.fac-tabs { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--fac-line, #262a33); }
+.fac-tabs button { padding: 6px 10px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--fac-muted, #8a909c);
+  font: inherit; cursor: pointer; }
+.fac-tabs button.on { border-bottom-color: var(--fac-accent, #4f8cff); color: var(--fac-text, #d6d9e0); }
+.fac-dlg-body { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 14px; }
+.fac-dlg-body label { display: flex; gap: 8px; align-items: center; padding: 4px 0; cursor: pointer; }
+.fac-dlg-body a.fac-lock { padding: 4px 0; }
+.fac-dlg-sec { margin: 8px 0 2px; color: var(--fac-muted, #8a909c); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.fac-dlg-sec:first-child { margin-top: 0; }
+.fac-dlg-inputs .fac-field { display: flex; flex-direction: column; align-items: stretch; gap: 3px; color: var(--fac-muted, #8a909c);
+  font-size: 11px; cursor: default; }
+.fac-sty { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.fac-sty-name { flex: 1; min-width: 0; }
+.fac-sty input[type=color] { width: 30px; height: 22px; padding: 0 2px; border: 1px solid var(--fac-line, #262a33); border-radius: 4px;
+  background: none; cursor: pointer; }
+.fac-sty select { max-width: 90px; }
+.fac-dlg-foot { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--fac-line, #262a33); }
+.fac-dlg-foot button { padding: 5px 12px; border: 1px solid var(--fac-line, #262a33); border-radius: 6px; background: none;
+  color: var(--fac-text, #d6d9e0); font: inherit; cursor: pointer; }
+.fac-dlg-foot button:hover { border-color: var(--fac-accent, #4f8cff); }
+.fac-dlg-foot .fac-primary { border-color: var(--fac-accent, #4f8cff); background: var(--fac-accent, #4f8cff); color: #fff; }
+.fac-narrow .fac-sty { flex-wrap: wrap; }
+/* Chart group (group.js): one to four charts; the group's top and bottom bars hold the toolbar, time bar and credit of the
+   chart in focus (outlined); the other charts' own bars are hidden. */
+.fac-grp { position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 240px;
+  background: var(--fac-bg, #0f1115); color: var(--fac-text, #d6d9e0); font: 12px/1.4 system-ui, -apple-system, Segoe UI, sans-serif; }
+.fac-grp-top { order: -1; position: relative; z-index: 10; }
+.fac-grp-grid { flex: 1; min-height: 0; display: grid; gap: 1px; background: var(--fac-line, #262a33); }
+.fac-cell { position: relative; display: flex; min-width: 0; min-height: 0; overflow: hidden; background: var(--fac-bg, #0f1115); }
+.fac-cell[hidden] { display: none; }
+.fac-cell > .fac { min-height: 0; }
+.fac-cell .fac-bar, .fac-cell .fac-timebar, .fac-cell .fac-credit { display: none; }
+.fac-grp-multi .fac-cell.on::after { content: ""; position: absolute; inset: 0; z-index: 8; border: 1px solid var(--fac-accent, #4f8cff); pointer-events: none; }
+.fac-grp-single .fac-layouts { display: none; }
+.fac-layouts > button { display: inline-flex; align-items: center; justify-content: center; }
+.fac-layouts .fac-panel { min-width: 0; white-space: nowrap; }
+.fac-lay-row { display: flex; align-items: center; gap: 2px; padding: 4px 2px; border-top: 1px solid var(--fac-line, #262a33); }
+.fac-ttl + .fac-lay-row { border-top: 0; }
+.fac-lay-n { width: 18px; flex: none; color: var(--fac-muted, #8a909c); font-size: 11px; text-align: center; }
+.fac-lay-row button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 26px; padding: 0; border: 0;
+  border-radius: 4px; background: none; color: var(--fac-text, #d6d9e0); cursor: pointer; }
+.fac-lay-row button:hover { background: var(--fac-line, #262a33); }
+.fac-lay-row button.on { background: var(--fac-text, #d6d9e0); color: var(--fac-bg, #0f1115); }
+/* The page's own form styles: the chart styles its select lists, symbol search and colour inputs, and leaves checkboxes,
+   radios and the native look of those controls to the browser. Site-wide form resets restyle them on a host page
+   (@tailwindcss/forms: appearance none, a white 16 px box with a blue tick, a blue focus ring; Tailwind preflight: no
+   margin), so the browser's own look is put back inside the chart, in the chart theme's colour scheme. */
+.fac, .fac-grp { color-scheme: var(--fac-scheme, dark); }
+.fac input[type=checkbox], .fac input[type=radio], .fac-grp input[type=checkbox], .fac-grp input[type=radio] { all: revert; }
+.fac select, .fac input[type=search], .fac-grp select, .fac-grp input[type=search] { -webkit-appearance: auto; appearance: auto;
+  print-color-adjust: economy; }
+.fac select:focus, .fac input[type=search]:focus, .fac-grp select:focus, .fac-grp input[type=search]:focus { box-shadow: none; }
+.fac select:focus, .fac-grp select:focus { outline: revert; }
+.fac input[type=search]::placeholder, .fac-grp input[type=search]::placeholder { color: revert; opacity: revert; }

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TradingView GEX by FlashAlpha: embed example</title>
+<meta name="description" content="TradingView GEX by FlashAlpha: embed a TradingView-style candlestick chart with FlashAlpha gamma exposure (GEX) indicators: call wall, put wall, gamma flip, max pain, net GEX, strike heatmap and GEX profile.">
+<style>
+  body { margin: 0; padding: 16px; background: #0f1115; color: #d6d9e0; font: 14px/1.5 system-ui, sans-serif; }
+  h1, h2 { font-weight: 600; }
+  h2 { margin-top: 32px; }
+  code { color: #fbbf24; }
+</style>
+</head>
+<body>
+<!--
+  1. Get a free API key: https://flashalpha.com/pricing?utm_source=github&utm_medium=example&utm_campaign=tradingview-gex-flashalpha
+  2. Replace YOUR_FLASHALPHA_API_KEY below. On a public website use an embed key (fa_pk_...), never your secret key.
+  3. Open this file from any static web server.
+-->
+
+<h1>SPX: GEX Levels and Net GEX (Basic plan)</h1>
+<p>Call wall, put wall, gamma flip, max pain and the 0DTE magnet on 5-minute candles, with net GEX in a pane below.</p>
+<div data-flashalpha-chart
+     data-symbol="SPX"
+     data-resolution="5m"
+     data-layers="levels,maxpain,magnet,netgex"
+     style="height: 560px"></div>
+
+<h2>SPY: strike heatmap and GEX profile (Growth plan)</h2>
+<p>Net GEX per strike behind the candles and at the right edge of the chart.</p>
+<div data-flashalpha-chart
+     data-symbol="SPY"
+     data-resolution="5m"
+     data-range="5D"
+     data-layers="levels,heatmap,profile"
+     style="height: 560px"></div>
+
+<h2>QQQ: light theme, no toolbar</h2>
+<p>A compact chart for a dashboard card or an article.</p>
+<div data-flashalpha-chart
+     data-symbol="QQQ"
+     data-resolution="15m"
+     data-theme="light"
+     data-controls="false"
+     data-layers="levels"
+     style="height: 360px"></div>
+
+<script async src="https://charts.flashalpha.com/embed.js" data-key="YOUR_FLASHALPHA_API_KEY"></script>
+</body>
+</html>
