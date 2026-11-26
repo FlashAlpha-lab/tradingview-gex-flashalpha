@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TradingView GEX by FlashAlpha: live gamma exposure chart</title>
-<meta name="description" content="Live TradingView-style candlestick chart with options gamma exposure (GEX) indicators: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, strike heatmap and GEX profile. Enter your FlashAlpha API key to view the chart.">
+<meta name="description" content="Open-source TradingView-style GEX chart: call wall, put wall, gamma flip, max pain, net GEX, GEX by strike and expiry, expected move and 0DTE hedging flow.">
 <link rel="canonical" href="https://flashalpha-lab.github.io/tradingview-gex-flashalpha/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="TradingView GEX by FlashAlpha: live gamma exposure chart">
@@ -26,7 +26,7 @@
       "url": "https://flashalpha-lab.github.io/tradingview-gex-flashalpha/",
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "Any (web browser)",
-      "description": "Live candlestick chart with options gamma exposure (GEX) indicators: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, strike heatmap and GEX profile, from the FlashAlpha options analytics API.",
+      "description": "Live candlestick chart with options gamma exposure (GEX) indicators: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, strike heatmap, GEX profile, expiry heatmap, expected move, level events and 0DTE hedging flow, from the FlashAlpha options analytics API.",
       "image": "https://raw.githubusercontent.com/FlashAlpha-lab/tradingview-gex-flashalpha/main/assets/gex-levels-walls-gamma-flip.png",
       "publisher": { "@id": "https://flashalpha.com/#organization" },
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free FlashAlpha plan available; GEX indicators start on the Basic plan." }
@@ -35,12 +35,13 @@
       "@type": "SoftwareSourceCode",
       "@id": "https://flashalpha-lab.github.io/tradingview-gex-flashalpha/#code",
       "name": "tradingview-gex-flashalpha",
-      "description": "Open-source JavaScript chart that draws options gamma exposure (GEX) levels on TradingView Lightweight Charts: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, strike heatmap and GEX profile.",
+      "description": "Open-source JavaScript chart that draws options gamma exposure (GEX) levels on TradingView Lightweight Charts: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, strike heatmap, GEX profile, expiry heatmap, expected move, level events and 0DTE hedging flow.",
+      "version": "1.1.0",
       "codeRepository": "https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha",
       "programmingLanguage": ["JavaScript", "TypeScript"],
       "runtimePlatform": "Web browser",
       "license": "https://opensource.org/licenses/MIT",
-      "keywords": "gamma exposure, GEX, call wall, put wall, gamma flip, max pain, 0DTE, dealer positioning, TradingView, Lightweight Charts, FlashAlpha",
+      "keywords": "gamma exposure, GEX, call wall, put wall, gamma flip, max pain, 0DTE, expected move, 0DTE hedging flow, GEX heatmap, dealer positioning, TradingView, Lightweight Charts, FlashAlpha",
       "targetProduct": { "@id": "https://flashalpha-lab.github.io/tradingview-gex-flashalpha/#app" },
       "author": { "@id": "https://flashalpha.com/#organization" }
     },
@@ -58,7 +59,7 @@
         { "@type": "Question", "name": "Is this a TradingView Pine Script indicator?",
           "acceptedAnswer": { "@type": "Answer", "text": "No. It is a chart you embed on your own website or app, built on TradingView's open-source Lightweight Charts library. It looks and works like a TradingView chart, but it runs outside tradingview.com and reads FlashAlpha data directly." } },
         { "@type": "Question", "name": "Is it free?",
-          "acceptedAnswer": { "@type": "Answer", "text": "The chart is free and open source under the MIT license. FlashAlpha data needs an API key: the free plan shows candles and volume, GEX Levels and Net GEX start on Basic, and the strike heatmap, GEX profile and 0DTE scope are on Growth. With your own data source you need no key at all." } },
+          "acceptedAnswer": { "@type": "Answer", "text": "The chart is free and open source under the MIT license. FlashAlpha data needs an API key: the free plan shows candles and volume, GEX Levels and Net GEX start on Basic, and the strike heatmap, GEX profile, expiry heatmap, expected move, level events, 0DTE hedging flow and 0DTE scope are on Growth. With your own data source you need no key at all." } },
         { "@type": "Question", "name": "Which symbols and timeframes are supported?",
           "acceptedAnswer": { "@type": "Answer", "text": "US stocks, ETFs and indices that the FlashAlpha chart API lists, such as SPX, SPY, QQQ, AAPL, MSFT and TSLA, on 1-minute, 5-minute, 15-minute, 1-hour, daily and weekly bars." } },
         { "@type": "Question", "name": "How often do the indicators update?",
@@ -147,8 +148,8 @@
 <section class="about" aria-labelledby="about-title">
   <h2 id="about-title">Options gamma exposure (GEX) on a TradingView-style chart</h2>
   <p><strong>TradingView GEX by FlashAlpha</strong> is an open-source JavaScript chart that draws options gamma exposure
-    (GEX) indicators on the candles: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, a strike heatmap and
-    a GEX profile. It is built on TradingView Lightweight Charts™ and reads data from the
+    (GEX) indicators on the candles: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, a strike heatmap,
+    a GEX profile, an expiry heatmap, the expected move, level events and the 0DTE hedging flow. It is built on TradingView Lightweight Charts™ and reads data from the
     <a href="https://flashalpha.com/?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha">FlashAlpha</a>
     options analytics API. The chart is free under the MIT license; the data needs a FlashAlpha API key.
     The source code is on <a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha">GitHub</a>.</p>
@@ -202,8 +203,8 @@
       It looks and works like a TradingView chart, but it runs outside tradingview.com and reads FlashAlpha data directly.</dd>
     <dt>Is it free?</dt>
     <dd>The chart is free and open source under the MIT license. FlashAlpha data needs an API key: the free plan shows candles and
-      volume, GEX Levels and Net GEX start on Basic, and the strike heatmap, GEX profile and 0DTE scope are on Growth. With your
-      own data source you need no key at all. See <a href="https://flashalpha.com/pricing?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha">plans and pricing</a>.</dd>
+      volume, GEX Levels and Net GEX start on Basic, and the strike heatmap, GEX profile, expiry heatmap, expected move, level
+      events, 0DTE hedging flow and 0DTE scope are on Growth. With your own data source you need no key at all. See <a href="https://flashalpha.com/pricing?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha">plans and pricing</a>.</dd>
     <dt>Which symbols and timeframes are supported?</dt>
     <dd>US stocks, ETFs and indices that the FlashAlpha chart API lists, such as SPX, SPY, QQQ, AAPL, MSFT and TSLA, on 1-minute,
       5-minute, 15-minute, 1-hour, daily and weekly bars.</dd>
