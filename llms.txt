@@ -11,7 +11,11 @@ Plans: Free = candles and volume. Basic = GEX Levels (call wall, put wall, gamma
 - [Overview and FAQ](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha#readme): all indicators, benefits, plans, embed, FAQ
 - [GEX Levels](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-levels.md): call wall, put wall, gamma flip, max pain, 0DTE magnet, regime tint, broken walls
 - [Net GEX](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/net-gex.md): net dealer gamma exposure in dollars under the price
-- [GEX by strike](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-by-strike.md): strike heatmap and GEX profile, GEX / DEX / VEX / CHEX lenses
+- [Strike heatmap and GEX profile](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-by-strike.md): net GEX per strike behind the candles and at the right edge, GEX / DEX / VEX / CHEX lenses
+- [Expiry heatmap](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/expiry-heatmap.md): gamma by strike and by expiration in a panel beside the chart, totals per strike and per expiry
+- [Expected move](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/expected-move.md): the options-implied 1σ range of each session from its open
+- [Level events](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/level-events.md): rejections, breaks and flip crossings at the GEX levels, regime flips, OPEX and earnings days
+- [0DTE hedging flow](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/0dte-hedging-flow.md): the stock dealers had to buy or sell to hedge today's 0DTE trades, with divergences
 - [Greeks and 0DTE metrics](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/metrics-pane.md): delta, vanna, charm, 0DTE pin score, IV ratio, VIX, dealer hedge per 1 %
 - [0DTE scope and live OI](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/0dte-and-live-oi.md): same-day expiry levels and live open interest
 
@@ -31,3 +35,7 @@ Plans: Free = candles and volume. Basic = GEX Levels (call wall, put wall, gamma
 - [Pricing and free API key](https://flashalpha.com/pricing)
 - [Free GEX tool](https://flashalpha.com/tools/gamma-exposure)
 - [gex-explained](https://github.com/FlashAlpha-lab/gex-explained): theory and math behind GEX
+- [flashalpha-js](https://github.com/FlashAlpha-lab/flashalpha-js): JavaScript and TypeScript SDK for the FlashAlpha API
+- [flashalpha-python](https://github.com/FlashAlpha-lab/flashalpha-python): Python SDK for the FlashAlpha API
+- [flashalpha-mcp](https://github.com/FlashAlpha-lab/flashalpha-mcp): MCP server for Claude, Cursor and other AI assistants
+- [awesome-options-analytics](https://github.com/FlashAlpha-lab/awesome-options-analytics): options analytics resources

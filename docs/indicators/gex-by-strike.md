@@ -1,13 +1,14 @@
-# GEX by strike indicator: strike heatmap and GEX profile on the price chart
+# Strike heatmap and GEX profile indicators: GEX by strike on the price chart
 
-**GEX by strike** shows dealer gamma exposure for every strike near the price, on the chart's price axis. It has two
-layers: a **strike heatmap** behind the candles and a **GEX profile** at the right edge. Both can switch from gamma to
-delta, vanna or charm exposure.
+Two indicators show dealer gamma exposure for every strike near the price, on the chart's price axis: the **Strike
+heatmap** behind the candles and the **GEX profile** at the right edge. Each is its own indicator in the Indicators menu,
+with its own **Value per strike** (gamma, delta, vanna or charm exposure). The [Expiry heatmap](expiry-heatmap.md) splits
+the same positioning by expiration.
 
 [← All indicators](../../README.md#indicators-at-a-glance) · Lowest plan: **Growth** ·
 [Live demo](https://flashalpha-lab.github.io/tradingview-gex-flashalpha/)
 
-![GEX by strike on a SPY 1-hour chart: the strike heatmap behind the candles and the GEX profile at the right edge](../../assets/gex-by-strike-heatmap-profile.png)
+![Strike heatmap and GEX profile on a SPY 1-hour chart: the strike heatmap behind the candles and the GEX profile at the right edge](../../assets/gex-by-strike-heatmap-profile.png)
 
 ---
 
@@ -34,7 +35,8 @@ Net GEX per strike as horizontal bars at the right edge of the chart.
 
 ## Lenses: GEX, DEX, VEX, CHEX
 
-The **Value per strike** setting switches the heatmap and the profile between four exposures:
+The **Value per strike** setting of each indicator switches it between four exposures (the heatmap and the profile can
+show different ones):
 
 | Lens | Exposure | What it shows |
 |---|---|---|
@@ -57,13 +59,16 @@ The **Value per strike** setting switches the heatmap and the profile between fo
 
 | Setting | Options | Plan |
 |---|---|---|
-| Layers | Strike heatmap, GEX profile (right) | Growth |
-| Value per strike | Net GEX, Net DEX, Net VEX, Net CHEX | Growth |
-| Style | Colours above and below zero, "Largest strikes only" | Growth |
+| Indicators | Strike heatmap, GEX profile (each on its own) | Growth |
+| Value per strike | Net GEX, Net DEX, Net VEX, Net CHEX, per indicator | Growth |
+| Style | Colours above and below zero; the heatmap's "Largest strikes only"; the profile's 15-minute ticks | Growth |
 | Expiries | All, or 0DTE | Growth |
 | Open interest | Settled, or Live (with today's flow; Live has the Net GEX lens only) | Alpha for Live |
 
 The heatmap is drawn on intraday charts (1-minute to 1-hour), where per-strike snapshots exist.
+
+From code: `options.lens` (`'gex'` for both, or `{ heatmap: 'dex', profile: 'gex' }`) and
+`chart.setLens(lens, 'heatmap' | 'profile')`.
 
 ## Add it to your chart
 
@@ -83,5 +88,6 @@ Strike snapshots are intraday data. Switch to a 1-minute to 1-hour interval.
 
 ---
 
-Related: [GEX Levels](gex-levels.md) · [Net GEX](net-gex.md) · [0DTE scope and live OI](0dte-and-live-oi.md) ·
+Related: [GEX Levels](gex-levels.md) · [Expiry heatmap](expiry-heatmap.md) · [Net GEX](net-gex.md) ·
+[0DTE scope and live OI](0dte-and-live-oi.md) ·
 [Get a free FlashAlpha API key](https://flashalpha.com/pricing?utm_source=github&utm_medium=docs&utm_campaign=tradingview-gex-flashalpha)

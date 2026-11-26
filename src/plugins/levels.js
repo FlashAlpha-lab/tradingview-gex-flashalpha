@@ -1,5 +1,5 @@
 import { LINE_STYLES, THEMES } from '../constants.js';
-import { fmtClock, fmtDay } from '../time.js';
+import { fmtClock } from '../time.js';
 import { LevelsOverlay, levelRuns, pct, regimeRuns } from './levels-overlay.js';
 
 /** The indicator (Indicators menu group) the core layers belong to; layer plugins join it with the same `indicator` name. */
@@ -85,7 +85,7 @@ export const levelsPlugin = {
   },
   attach(ctx) {
     const { LW } = ctx;
-    const { dayOf, num } = ctx.util;
+    const { dayOf } = ctx.util;
     const flip = e => e.gamma_flip || {};
     const color = id => ctx.styleOf(id).color;
     let s = null, daily = null, markers = null, overlay = null;
@@ -240,8 +240,9 @@ export const levelsPlugin = {
           autoscaleInfoProvider: () => null });
         daily = { flip: dailyLevel(color('flip')), callWall: dailyLevel(color('callWall')), putWall: dailyLevel(color('putWall')),
           maxPain: dailyLevel(color('maxPain')) };
-        s = { flip: ctx.level(color('flip'), 'Gamma flip', 'flip'), callWall: ctx.level(color('callWall'), 'Call wall', 'callWall'),
-          putWall: ctx.level(color('putWall'), 'Put wall', 'putWall'), maxPain: ctx.level(color('maxPain'), 'Max pain', 'maxPain') };
+        // the short titles where the full ones do not fit (phones, a panel at the pane's right edge): the levels' tags
+        s = { flip: ctx.level(color('flip'), 'Gamma flip', 'flip', 'Flip'), callWall: ctx.level(color('callWall'), 'Call wall', 'callWall', 'CW'),
+          putWall: ctx.level(color('putWall'), 'Put wall', 'putWall', 'PW'), maxPain: ctx.level(color('maxPain'), 'Max pain', 'maxPain', 'MP') };
         // The overlay draws the walls', the flip's and max pain's lines (flat, no vertical step): their series draw none.
         for (const id of FLAT) for (const x of [s[id], daily[id]]) x.applyOptions({ lineVisible: false });
         markers = LW.createSeriesMarkers(ctx.candles, []);
@@ -310,22 +311,6 @@ export const levelsPlugin = {
       // The session under the crosshair stands out: the overlay veils the other sessions (none off the chart).
       crosshair(time) {
         setFocus(time == null ? null : focusable.find(d => time >= d.from && time <= d.to) || null);
-      },
-      // The daily levels under the crosshair, on a bar without an intraday exposure row.
-      legend(time) {
-        const r = time != null ? dailyByTime.get(time) : null;
-        if (!r) return null;
-        // Intraday only the daily max pain is drawn (until the first exposure row that has one): explain that line alone.
-        if (time >= dailyCut.gex)
-          return time < dailyCut.maxPain && ctx.on('maxpain') && r.max_pain != null
-            ? `Max pain (daily, close ${fmtDay.format(new Date(r.day + 'T00:00:00Z'))}): ${num(r.max_pain)}` : null;
-        const ok = r.gamma_flip_status === 'available' || r.gamma_flip == null;
-        // Each layer's levels only while it is on: the walls and the flip with Walls & gamma flip, max pain with Max pain.
-        const parts = !ctx.on('levels') ? []
-          : [`Gamma flip ${num(r.gamma_flip)}${ok ? '' : ' (unverified)'}`, `Call wall ${num(r.call_wall)}`, `Put wall ${num(r.put_wall)}`];
-        if (ctx.on('maxpain') && r.max_pain != null) parts.push(`Max pain ${num(r.max_pain)}`);
-        if (!parts.length) return null;
-        return `Daily levels (close ${fmtDay.format(new Date(r.day + 'T00:00:00Z'))}): ${parts.join(' · ')}`;
       },
       // The indicator's line in the legend: { label, value, prev, plot } items (change vs the previous
       // session; the value in the plot's colour, left out while the plot is hidden). A wall broken at or before the bar

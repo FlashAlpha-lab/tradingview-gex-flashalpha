@@ -24,8 +24,11 @@ function backgroundFits(color, name) {
   return (0.2126 * r + 0.7152 * g + 0.0722 * b < 0.179) === (name === 'dark');
 }
 
-/** Theme: CSS variables on the root and the same colours in lightweight-charts. 'auto' follows the reader's system setting. */
-export function createTheme(root, chart, o) {
+/**
+ * Theme: CSS variables on the root and the same colours in lightweight-charts. 'auto' follows the reader's system setting.
+ * `applied(name)` hears the theme drawn ('dark' or 'light') after each change.
+ */
+export function createTheme(root, chart, o, applied) {
   const dark = global.matchMedia ? global.matchMedia('(prefers-color-scheme: dark)') : null;
   function apply() {
     const want = o.theme === 'auto' ? (dark && !dark.matches ? 'light' : 'dark') : o.theme;
@@ -34,7 +37,8 @@ export function createTheme(root, chart, o) {
     if (o.background && backgroundFits(o.background, name)) root.style.setProperty('--fac-bg', o.background);
     chart.applyOptions({ layout: { textColor: t.muted, panes: { separatorColor: t.line } },
       grid: { vertLines: { color: t.grid }, horzLines: { color: t.grid } },
-      rightPriceScale: { borderColor: t.line }, timeScale: { borderColor: t.line } });
+      rightPriceScale: { borderColor: t.line }, leftPriceScale: { borderColor: t.line }, timeScale: { borderColor: t.line } });
+    if (applied) applied(name);
   }
   apply();
   const onScheme = () => { if (o.theme === 'auto') apply(); };

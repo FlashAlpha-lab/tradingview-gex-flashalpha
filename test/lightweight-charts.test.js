@@ -106,6 +106,47 @@ describe('vendored copy and the chart on it', { skip: built ? false : 'run npm r
     chart.destroy();
     assert.deepEqual(errors, []);
   });
+
+  it('the Settings menu\'s chart types, price scale, crosshair and watermark work on the pinned version', async () => {
+    const w = browser('<!doctype html><body><div id="c"></div></body>');
+    const errors = [];
+    w.console.error = (...a) => errors.push(a.join(' '));
+    w.eval(readFileSync(vendored, 'utf8'));
+    w.eval(read('dist/tradingview-gex-flashalpha.min.js'));
+    const chart = w.FlashAlphaChart.mount(w.document.getElementById('c'), { symbol: 'SPX', source: session(), refresh: 0, layers: ['levels', 'maxpain'] });
+    await new Promise(r => setTimeout(r, 50));
+    const menu = w.document.querySelector('.fac-settings');
+    const pick = (k, v) => {
+      if (k === 'chartType') { w.document.querySelector(`[data-g="type"] .fac-opt[data-v="${v}"]`).click(); return; }
+      const x = menu.querySelector(`[data-s="${k}"]`);
+      if (x.type === 'checkbox') x.checked = v; else x.value = v;
+      x.dispatchEvent(new w.Event('change'));
+    };
+    const pane = () => chart.chart.panes()[0];
+    for (const t of ['hollow', 'bars', 'line', 'area', 'baseline', 'heikin', 'candles']) {
+      pick('chartType', t);
+      await new Promise(r => setTimeout(r, 0));
+    }
+    assert.equal(pane().getSeries().length, 11, 'back on Candles: no series left from the other types');
+    pick('chartType', 'heikin');
+    pick('scaleSide', 'left');
+    pick('scaleMode', 'percent');
+    const left = chart.chart.priceScale('left', 0);
+    assert.equal(left.options().mode, 2);
+    assert.equal(left.options().visible, true);
+    assert.equal(chart.chart.priceScale('right', 0).options().visible, false);
+    assert.equal(pane().getSeries()[0].options().priceScaleId, 'left', 'the candles moved');
+    for (const [k, v] of [['scaleMode', 'indexed'], ['scaleMode', 'log'], ['invert', true], ['autoScale', false], ['crosshair', 'magnetOHLC'],
+      ['crosshair', 'hidden'], ['priceLine', false], ['priceLabel', false], ['watermark', true], ['scaleSide', 'right'], ['scaleMode', 'normal']]) pick(k, v);
+    for (const b of w.document.querySelectorAll('[data-g="scale"] button')) b.click();     // % log auto from the time bar
+    await chart.setResolution('15m');
+    chart.setTheme('light');
+    pick('watermark', false);
+    await new Promise(r => setTimeout(r, 50));
+    assert.equal(pane().getSeries().filter(s => s.options().priceScaleId === 'left').length, 0, 'every series back on the right');
+    chart.destroy();
+    assert.deepEqual(errors, []);
+  });
 });
 
 describe('embed.js and the page\'s own lightweight-charts', { skip: built ? false : 'run npm run build first' }, () => {

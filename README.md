@@ -44,7 +44,8 @@ chart API with your FlashAlpha API key.
 **In short**
 
 - **What it shows:** call wall, put wall, gamma flip, max pain, 0DTE magnet, gamma regime, net GEX, net GEX per strike
-  (heatmap and profile), delta / vanna / charm exposure, and 0DTE metrics such as the pin score.
+  (heatmap and profile) and per expiration, delta / vanna / charm exposure, the expected move, what the price did at the
+  levels, the 0DTE hedging flow, and 0DTE metrics such as the pin score.
 - **Where:** US stocks, ETFs and indices such as SPX, SPY, QQQ, AAPL, MSFT and TSLA, from 1-minute to weekly bars.
 - **How:** one `<div>` and one `<script>` tag on any website, or `npm install tradingview-gex-flashalpha` and
   `mount(el, { symbol: 'SPX' })` in your app.
@@ -59,9 +60,13 @@ chart API with your FlashAlpha API key.
 - [Indicators at a glance](#indicators-at-a-glance)
 - [1. GEX Levels: call wall, put wall, gamma flip, max pain, 0DTE magnet](#1-gex-levels-call-wall-put-wall-gamma-flip-max-pain-0dte-magnet)
 - [2. Net GEX pane](#2-net-gex-pane)
-- [3. GEX by strike: strike heatmap and GEX profile](#3-gex-by-strike-strike-heatmap-and-gex-profile)
+- [3. Strike heatmap and GEX profile](#3-strike-heatmap-and-gex-profile)
 - [4. Greeks exposure and 0DTE metrics pane](#4-greeks-exposure-and-0dte-metrics-pane)
 - [5. 0DTE scope and live open interest](#5-0dte-scope-and-live-open-interest)
+- [6. Expected move](#6-expected-move)
+- [7. Expiry heatmap](#7-expiry-heatmap)
+- [8. Level events](#8-level-events)
+- [9. 0DTE hedging flow](#9-0dte-hedging-flow)
 - [Chart features](#chart-features)
 - [Which plan unlocks which indicator?](#which-plan-unlocks-which-indicator)
 - [Add the chart to your site in one line](#add-the-chart-to-your-site-in-one-line)
@@ -110,11 +115,15 @@ The levels are model estimates from open interest, not observed dealer positions
 |---|---|---|---|
 | [GEX Levels](docs/indicators/gex-levels.md) | Call wall, put wall, gamma flip and max pain lines, the 0DTE magnet, the gamma regime tint and the previous session's levels | Key support, resistance and regime levels from options positioning, right on the price | Basic |
 | [Net GEX](docs/indicators/net-gex.md) | Net dealer gamma in dollars as a line around zero in a pane under the price | See at a glance when dealers switch from dampening to amplifying moves | Basic |
-| [GEX by strike](docs/indicators/gex-by-strike.md) | Strike heatmap behind the candles and a GEX profile at the right edge, with GEX, delta, vanna and charm lenses | Find the strikes that attract, stall or accelerate the price | Growth |
+| [Strike heatmap and GEX profile](docs/indicators/gex-by-strike.md) | Net GEX per strike behind the candles, and as bars at the right edge; each can show delta, vanna or charm instead | Find the strikes that attract, stall or accelerate the price | Growth |
+| [Expiry heatmap](docs/indicators/expiry-heatmap.md) | A strike × expiration grid in a panel beside the chart, with totals per strike and per expiration | Know which expiry a wall comes from, and what each expiration takes away | Growth |
 | [Greeks and 0DTE metrics](docs/indicators/metrics-pane.md) | A pane for delta, vanna or charm exposure, or a 0DTE metric such as pin score, IV ratio, VIX or dealer hedge per ±1 % | Track the forces behind the levels, minute by minute | Basic (Greeks), Growth (metrics) |
 | [0DTE scope and live OI](docs/indicators/0dte-and-live-oi.md) | The same indicators computed on today's expiry only, or on open interest updated with today's flow | Same-day options context for 0DTE traders | Growth (0DTE), Alpha (live OI) |
+| [Expected move](docs/indicators/expected-move.md) | The options-implied 1σ range of each session from its open, green above and red below | The range the options market expects today, and how often the price stayed inside it | Growth |
+| [Level events](docs/indicators/level-events.md) | Markers where the price was rejected at a level, broke it or crossed the flip; regime flips; OPEX, earnings and OI change days | See which levels held and which broke, as it happened | Growth |
+| [0DTE hedging flow](docs/indicators/0dte-hedging-flow.md) | The stock dealers had to buy or sell since the open to hedge today's 0DTE trades, in a pane under the price | Who is pushing the price, and whether a move has hedging behind it | Growth |
 
-GEX Levels, Net GEX and GEX by strike are in the chart's **Indicators** menu, whatever your plan; the metrics pane is a
+Every indicator above is in the chart's **Indicators** menu, whatever your plan; the metrics pane is a
 setting of Net GEX, the 0DTE scope and live open interest are settings of GEX Levels. A layer above your plan shows a
 lock and the plan it needs.
 
@@ -173,13 +182,13 @@ Read more: [Net GEX](docs/indicators/net-gex.md).
 
 ---
 
-## 3. GEX by strike: strike heatmap and GEX profile
+## 3. Strike heatmap and GEX profile
 
 <p align="center">
-  <img src="assets/gex-by-strike-heatmap-profile.png" alt="SPY 1-hour chart with GEX by strike: net GEX per strike as a heatmap behind the candles and as horizontal bars at the right edge, green for long gamma strikes and red for short gamma strikes" width="900">
+  <img src="assets/gex-by-strike-heatmap-profile.png" alt="SPY 1-hour chart with the strike heatmap and the GEX profile: net GEX per strike as a heatmap behind the candles and as horizontal bars at the right edge, green for long gamma strikes and red for short gamma strikes" width="900">
 </p>
 
-The full options positioning by strike, on the price axis.
+The full options positioning by strike, on the price axis, in two indicators.
 
 - **Strike heatmap:** net GEX per strike behind the candles, for every bar. Green strikes are long gamma, red strikes
   short gamma; stronger colour means more gamma. The 8 largest strikes stand out and far-away strikes fade, so the chart
@@ -187,7 +196,7 @@ The full options positioning by strike, on the price axis.
 - **GEX profile:** net GEX per strike as horizontal bars at the right edge of the chart, for the latest snapshot or the
   bar under your cursor. Small ticks show where each strike stood 15 minutes earlier; the legend gives the value of a
   full bar, for example `GEX profile: full bar $3.16B`.
-- **Lenses:** switch both from **gamma (GEX)** to **delta (DEX)**, **vanna (VEX)** or **charm (CHEX)** exposure per strike.
+- **Lenses:** switch each from **gamma (GEX)** to **delta (DEX)**, **vanna (VEX)** or **charm (CHEX)** exposure per strike.
 
 **Benefits**
 
@@ -197,7 +206,7 @@ The full options positioning by strike, on the price axis.
 - **One chart, four Greeks.** Vanna shows sensitivity to implied volatility, charm the drift into the close, delta the
   directional hedge.
 
-Read more: [GEX by strike](docs/indicators/gex-by-strike.md).
+Read more: [Strike heatmap and GEX profile](docs/indicators/gex-by-strike.md).
 
 ---
 
@@ -244,13 +253,90 @@ Read more: [0DTE scope and live OI](docs/indicators/0dte-and-live-oi.md).
 
 ---
 
+## 6. Expected move
+
+The move the options market prices in for each session, drawn from the session's 9:30 ET open: **+1σ** dotted light green,
+**−1σ** dotted light red, and the band between them filled faintly. On weekly bars the band is
+the week's.
+
+**Benefits**
+
+- **A frame for the day.** About 2 sessions in 3 close inside ±1σ: targets and stops next to the range options expect.
+- **How reliable it was.** The legend counts the finished sessions in view that stayed inside, for example
+  `Inside 14/20 (70%)`.
+- **Hover a bar** for nodes on its close and on the band, and a box with the close in σ from the open and the distance
+  to +1σ and −1σ.
+- **Pairs with the GEX levels.** A test of +1σ under positive gamma often stalls; under negative gamma it often breaks.
+
+Read more: [Expected move](docs/indicators/expected-move.md).
+
+---
+
+## 7. Expiry heatmap
+
+The options positioning near the price, split by expiration: a grid in a panel beside the chart (under it on a phone),
+a row per strike and a column per expiration, each cell coloured by its net GEX, or by delta, vanna or charm exposure.
+
+**Benefits**
+
+- **Know how long a level lasts.** A wall built on 0DTE options is gone after today's close; one on the monthly OPEX lasts.
+- **See what an expiration takes away.** A total per expiration, with its share of the whole, and a total per strike.
+- **Tied to the chart.** `CW`, `PW`, `0DTE` and `MP` tag the strikes of the levels drawn on the candles; lines mark the
+  price and the gamma flip.
+- **At hand.** Lens, strikes shown (20, 30 or 50) and values in cells in the panel's header; fold the panel to a tab.
+
+Read more: [Expiry heatmap](docs/indicators/expiry-heatmap.md).
+
+---
+
+## 8. Level events
+
+Markers on the candles for what the price did at the GEX levels, from 1-minute bars: **▼ / ▲** rejected at a level
+(resistance / support), **■** broken, **●** gamma flip crossed, **+γ / −γ** dealers' gamma changed sign and held. Each
+marker names its level (CW, PW, 0DTE, MP, Flip). Day markers flag OPEX, earnings, expiry rolls and the largest open
+interest change.
+
+**Benefits**
+
+- **Which levels held.** The legend counts it per level, for example `PW held 10/13`.
+- **Readable.** The 0DTE magnet's events are off by default (it is touched many times a day); zoomed out, the markers show
+  their shapes only.
+- **Hover a bar** for its events, the minute of each and the wall's strength.
+- **Breaks with context:** with the 0DTE hedging flow on, a break says whether the flow went with the move or against it.
+
+Read more: [Level events](docs/indicators/level-events.md).
+
+---
+
+## 9. 0DTE hedging flow
+
+An estimate of the stock dealers had to buy (above zero, blue) or sell (below zero, orange) since the 9:30 ET open to hedge
+the options on today's expiry traded today, in a pane under the price, with the flow of each bar as a histogram.
+
+**Benefits**
+
+- **Who is pushing.** The slope shows hedging that adds buying or selling pressure.
+- **Divergences.** **Div** markers where the price makes a new session high (low) with less hedging behind it.
+- **Calls and puts.** The two legs of the total, on request.
+- **Comparable across symbols.** In **% move** units the flow is set against the session's 0DTE gamma.
+
+Read more: [0DTE hedging flow](docs/indicators/0dte-hedging-flow.md).
+
+---
+
 ## Chart features
 
 The indicators run on a full TradingView-style chart:
 
 - **Candles and volume** from 1-minute to weekly bars, regular or extended hours, on a US Eastern time axis.
-- **TradingView-style legend:** each indicator's line starts with its title, with hide, options and remove buttons.
+- **TradingView-style legend:** each indicator's line starts with its title, with hide, options and remove buttons (on
+  a touch screen the Indicators menu does those).
 - **Indicators menu** with options per layer: colours, line widths, line styles, price lines and axis labels.
+- **Laid out like TradingView:** a chart type menu next to Indicators (candles, hollow candles, bars, line, area,
+  baseline, Heikin Ashi); **%**, **log** and **auto** price scale buttons at the right of the time bar; and Settings in
+  sections: Appearance (theme, grid lines, watermark), Scales (regular, logarithmic, percent or indexed to 100; left or
+  right; auto scale; invert; price label and last price line), Crosshair (free, magnet on the close or on OHLC, hidden)
+  and Status line (legend, volume).
 - **Layouts:** one to four charts side by side, each with its own interval and indicators (19 layouts).
 - **Auto-refresh** every 60 seconds, and optional live streaming of candles and levels over WebSocket (the `live`
   option).
@@ -268,7 +354,7 @@ The indicators run on a full TradingView-style chart:
 |---|---|
 | **Free** | Candles and volume |
 | **Basic** | GEX Levels (call wall, put wall, gamma flip, max pain, 0DTE magnet), Net GEX pane, delta / vanna / charm exposure panes |
-| **Growth** | Basic, plus the strike heatmap, the GEX profile with GEX / DEX / VEX / CHEX lenses, the 0DTE scope, and 0DTE and volatility metrics |
+| **Growth** | Basic, plus the strike heatmap, the GEX profile and the expiry heatmap with GEX / DEX / VEX / CHEX lenses, the expected move, level events, the 0DTE hedging flow, the 0DTE scope, and 0DTE and volatility metrics |
 | **Alpha** | Growth, plus the live open interest basis |
 
 The chart reads the plan from your API key; you do not set it. The API enforces the plan; the chart only shows it. Prices
@@ -303,8 +389,12 @@ adds charts after it loads, for example in a single-page app, call `FlashAlphaEm
 | `maxpain` | GEX Levels: max pain |
 | `magnet` | GEX Levels: 0DTE magnet |
 | `netgex` | Net GEX pane |
-| `heatmap` | GEX by strike: strike heatmap |
-| `profile` | GEX by strike: GEX profile |
+| `heatmap` | Strike heatmap |
+| `profile` | GEX profile |
+| `expiries` | Expiry heatmap |
+| `em` | Expected move |
+| `events` | Level events |
+| `hedgeflow` | 0DTE hedging flow |
 
 | Attribute | Default | Description |
 |---|---|---|
@@ -369,7 +459,8 @@ mount(el, { lightweightCharts: LightweightCharts, injectCss: false, /* ... */ })
 
 **What the npm package draws.** The package is the chart and the core layers of GEX Levels: call wall, put wall, gamma
 flip and max pain (`levels`, `maxpain`), with the daily levels, the regime tint and the broken-wall markers. The other
-indicators (0DTE magnet, Net GEX, GEX by strike, the metrics pane, the 0DTE scope and live open interest) are FlashAlpha
+indicators (0DTE magnet, Net GEX, the strike heatmap, the GEX profile, the expiry heatmap, the expected move, level events,
+the 0DTE hedging flow, the metrics pane, the 0DTE scope and live open interest) are FlashAlpha
 layers served by the chart host: use the [embed](#add-the-chart-to-your-site-in-one-line), or the
 [script build](#use-without-a-bundler) with the layer file. See
 [Core layers and FlashAlpha layers](#core-layers-and-flashalpha-layers).
@@ -586,7 +677,10 @@ chart.destroy();
 | `chart` | The Lightweight Charts instance, for your own series. |
 
 With the FlashAlpha layers loaded, the chart also has `setExposure({ scope, basis })` (for example
-`chart.setExposure({ scope: 'zero_dte', basis: 'live' })`), `setMetric(name)` and `setLens(lens)`.
+`chart.setExposure({ scope: 'zero_dte', basis: 'live' })`), `setMetric(name)`, `setLens(lens, layer)` (the value per strike
+of the strike heatmap, the GEX profile and the expiry heatmap: all three, or the one named) and `setHedgeUnits('usd' | 'move')`
+(the 0DTE hedging flow's units). Their options: `lens` (`'gex'`, `'dex'`, `'vex'` or `'chex'`, or
+`{ heatmap, profile, expiries }`), `expiryRows` (the strikes in the expiry heatmap) and `hedgeUnits`.
 
 Static functions: `mount`, `registerLayers`, `setLicenseKey`, `chartEngineSource(baseUrl, apiKey)`, `plans`, `version`
 (and `FlashAlphaChart.layers` with the script build).
@@ -669,7 +763,7 @@ the first bar, as long as the range picked (up to the most a resolution allows i
 `first_bar` from `symbols()`; drag it to the right edge when the newest bar is more than two bars old and it loads the bars
 after it. Both start after the reader touches the chart and keep the bars in view where they are.
 
-The **FlashAlpha layers** (`magnet`, `netgex`, `heatmap`, `profile`, the metrics pane, the 0DTE scope and live open
+The **FlashAlpha layers** (`magnet`, `netgex`, `heatmap`, `profile`, `expiries`, `em`, `events`, `hedgeflow`, the metrics pane, the 0DTE scope and live open
 interest, described in [Indicators at a glance](#indicators-at-a-glance)) are a layer plugin served by the chart host,
 `https://charts.flashalpha.com/flashalpha-chart-layers.js`. They are not in this repository or the npm package. The embed
 loads them for you; with the script build, load that file after the chart and before `mount`.
@@ -764,14 +858,15 @@ A plugin has these fields:
 - `layers`: an array of `[id, label]` pairs.
 - `indicator` (optional): the name of the indicator it joins, for example `GEX Levels`.
 - `indicators` (optional): an indicator per layer ID, so one plugin can fill several, for example
-  `{ heatmap: 'GEX by strike' }`. `ctx.addControl(el, 'panel', name)` puts a control in one of them.
-- `defaults` (optional): layer IDs turned on when the reader switches its indicator on.
+  `{ heatmap: 'Strike heatmap' }`. `ctx.addControl(el, 'panel', name)` puts a control in one of them.
+- `defaults`: not used any more (an indicator's switch turns all its layers on, or all off).
 - `plans` (optional): the lowest plan per layer ID, for example `{ heatmap: 'growth' }`.
 - `apiLayers(ctx)` (optional): extra API layers to request.
 - `attach(ctx)`: runs once per chart and returns a handle with any of `ready()`, `draw(response)`, `clear()`,
   `legend(time, y)`, `crosshair(time, y)`, and `destroy()`. The handle can also have:
-  - `legendLevels(row, parts, prev, indicator)`: add to an indicator's line in the legend (called once per indicator
-    of the plugin that is on, `indicator` is its name) by inserting into or appending to
+  - `legendLevels(row, parts, prev, indicator, at)`: add to an indicator's line in the legend (called once per indicator
+    of the plugin that is on, `indicator` is its name, at every bar: `row` is `{ time }` where there is no exposure row;
+    `at` is `{ time, y }`, the crosshair's y or null) by inserting into or appending to
     `parts`: `{ label, value, prev, cls, format, note }` reads like a key level (a number with its change against `prev`,
     the previous session's last row, written by `format` when given; or a string; `note` in brackets after the value),
     `{ text, title }` is a note whose `title` shows on hover, a string part is shown as text.
@@ -837,7 +932,8 @@ the optional `live` WebSocket mode. Outside market hours the chart shows the las
 
 **Is it free?**
 The chart is free and open source under the MIT license. FlashAlpha data needs an API key: the free plan shows candles and
-volume, GEX Levels and Net GEX start on Basic, and the strike heatmap, GEX profile and 0DTE scope are on Growth. With your
+volume, GEX Levels and Net GEX start on Basic, and the strike heatmap, GEX profile, expiry heatmap, expected move, level
+events, 0DTE hedging flow and 0DTE scope are on Growth. With your
 own `source` you need no key at all.
 
 **Can I use it for 0DTE trading?**
@@ -879,6 +975,7 @@ that data on a price chart.
 - [Free GEX tool](https://flashalpha.com/tools/gamma-exposure?utm_source=github&utm_medium=readme&utm_campaign=tradingview-gex-flashalpha)
 - [flashalpha-js](https://github.com/FlashAlpha-lab/flashalpha-js): JavaScript and TypeScript SDK.
 - [flashalpha-python](https://github.com/FlashAlpha-lab/flashalpha-python): Python SDK.
+- [flashalpha-mcp](https://github.com/FlashAlpha-lab/flashalpha-mcp): MCP server for Claude, Cursor and other AI assistants.
 - [gex-explained](https://github.com/FlashAlpha-lab/gex-explained): the theory and math behind GEX.
 - [awesome-options-analytics](https://github.com/FlashAlpha-lab/awesome-options-analytics): options analytics resources.
 
@@ -914,10 +1011,12 @@ src/
   live.js               the live WebSocket feed (option live)
   constants.js          resolutions, ranges, plans, colours, themes, error messages
   time.js               ET time helpers (etTime, dayOf, sessionOf)
-  util.js               esc, num, big, floorIndex
+  util.js               esc, num, big, floorIndex, cutGaps (a gap in a line stays a gap)
   plans.js              plan ranks, license key, upgrade links
   registry.js           registerLayers and the built-in plugins
   theme.js              dark / light / auto
+  display.js            chart type, price scale, crosshair, price line and watermark (chart type menu, % log auto, Settings)
+  percent-levels.js     the level lines and labels on a Percent or Indexed to 100 scale (drawn on the candles)
   css.js, styles.css    the style sheet and its injection
   plugins/levels.js     the core layers (levels, maxpain, daily levels) as a layer plugin
   components/           layout, toolbar, indicators, screenshot, legend, Upgrade box, empty state, brand

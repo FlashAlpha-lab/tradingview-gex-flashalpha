@@ -2,7 +2,7 @@ import './helpers.js';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { dayOf, etTime, sessionOf } from '../src/time.js';
-import { big, esc, floorIndex, num } from '../src/util.js';
+import { big, cutGaps, esc, floorIndex, num } from '../src/util.js';
 import { chartEngineSource } from '../src/source.js';
 import { planRank, upgradeHref } from '../src/plans.js';
 
@@ -26,6 +26,16 @@ describe('util', () => {
     assert.equal(num(5012.5), '5,012.50');
     assert.equal(num(null), '—');
     assert.deepEqual([big(1.5e9), big(2.25e6), big(1500), big(12), big(null)], ['1.50B', '2.3M', '1.5K', '12', '—']);
+  });
+  it('cutGaps makes the point before a gap transparent (lightweight-charts would join across it), not the last point', () => {
+    const pts = [{ time: 1, value: 5 }, { time: 2, value: 6 }, { time: 3 }, { time: 4, value: 7, color: '#f00' }, { time: 5, value: 8 }, { time: 6 }];
+    const out = cutGaps(pts);
+    assert.deepEqual(out.map(p => p.color), [undefined, 'transparent', undefined, '#f00', undefined, undefined]);
+    assert.equal(pts[1].color, undefined, 'the points given are left as they are');
+    assert.deepEqual(Object.keys(cutGaps(pts, 'baseline')[1]).filter(k => k !== 'time' && k !== 'value'),
+      ['topLineColor', 'bottomLineColor', 'topFillColor1', 'topFillColor2', 'bottomFillColor1', 'bottomFillColor2']);
+    assert.deepEqual(Object.keys(cutGaps(pts, 'area')[1]).filter(k => k !== 'time' && k !== 'value'), ['lineColor', 'topColor', 'bottomColor']);
+    assert.deepEqual(cutGaps([{ time: 1 }, { time: 2, value: 1 }]), [{ time: 1 }, { time: 2, value: 1 }], 'a gap first: nothing to hide');
   });
   it('floorIndex finds the last time <= t', () => {
     assert.deepEqual([floorIndex([10, 20, 30], 5), floorIndex([10, 20, 30], 20), floorIndex([10, 20, 30], 99)], [-1, 1, 2]);

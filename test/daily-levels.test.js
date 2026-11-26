@@ -58,14 +58,9 @@ describe('daily levels', () => {
     assert.deepEqual(maxPain.data.map(p => p.value ?? null), [5007, 5010, 5011, null, 5013]);
     const legend = () => el.querySelector('.fac-legend').textContent;
     assert.doesNotMatch(legend(), /pick 1m to 1h/, 'the daily levels are levels to show on 1d');
+    // no "Daily levels (close …)" note under the legend
     c().crosshair.forEach(fn => fn({ time: Date.parse('2026-11-11T00:00:00Z') / 1000, point: { x: 0, y: 0 } }));
-    assert.match(legend(), /Daily levels \(close Nov 10\): Gamma flip 5,000\.00 · Call wall 5,060\.00 · Put wall 4,940\.00 · Max pain 5,010\.00/);
-    // Walls & gamma flip off: max pain only
-    await chart.setLayers(['maxpain']);
-    await tick();
-    c().crosshair.forEach(fn => fn({ time: Date.parse('2026-11-11T00:00:00Z') / 1000, point: { x: 0, y: 0 } }));
-    assert.match(legend(), /Daily levels \(close Nov 10\): Max pain 5,010\.00/);
-    assert.doesNotMatch(legend(), /Gamma flip|Call wall|Put wall/);
+    assert.doesNotMatch(legend(), /Daily levels/);
     chart.destroy();
   });
 

@@ -17,9 +17,16 @@ export const window = dom.window;
 /** A stand-in for lightweight-charts 5 that records what the chart asks of it (jsdom has no canvas). */
 export function fakeLW() {
   const LW = {
-    LineSeries: 'Line', CandlestickSeries: 'Candlestick', HistogramSeries: 'Histogram',
-    CrosshairMode: { Normal: 0 }, LineType: { WithSteps: 1 }, LineStyle: { Dotted: 1, Dashed: 2 },
+    LineSeries: 'Line', CandlestickSeries: 'Candlestick', HistogramSeries: 'Histogram', BarSeries: 'Bar', AreaSeries: 'Area',
+    BaselineSeries: 'Baseline',
+    CrosshairMode: { Normal: 0, Magnet: 1, Hidden: 2, MagnetOHLC: 3 }, LineType: { WithSteps: 1 }, LineStyle: { Dotted: 1, Dashed: 2 },
     charts: [],
+    watermarks: [],                         // every createTextWatermark(pane, options): { pane, opts, detached }
+    createTextWatermark(pane, opts) {
+      const wm = { pane, opts, detached: false, applyOptions(x) { this.opts = x; }, detach() { this.detached = true; } };
+      LW.watermarks.push(wm);
+      return wm;
+    },
     markerSets: [],                         // every createSeriesMarkers(series, markers): { series, markers } (setMarkers replaces markers)
     createSeriesMarkers(series, markers) {
       const set = { series, markers, setMarkers(x) { this.markers = x; } };
@@ -31,7 +38,15 @@ export function fakeLW() {
         el, options, series: [], applied: [], crosshair: [], removed: false,
         addSeries(type, opts, pane = 0) {
           const s = { type, opts, pane, data: null, applied: [], primitives: [], updates: [], setData(d) { this.data = d; }, applyOptions(x) { this.applied.push(x); },
+            options() { return Object.assign({}, this.opts, ...this.applied); },
             attachPrimitive(p) { this.primitives.push(p); },
+            priceLines: [],                 // createPriceLine(spec): { options } (applyOptions merges); removePriceLine drops it
+            createPriceLine(spec) {
+              const l = { options: Object.assign({}, spec), applyOptions(x) { Object.assign(this.options, x); } };
+              this.priceLines = this.priceLines.concat(l);
+              return l;
+            },
+            removePriceLine(l) { this.priceLines = this.priceLines.filter(x => x !== l); },
             getPane() { return chart.panes()[pane]; },
             // Like lightweight-charts 5.3: a bar older than the last one only with historicalUpdate, and only one that exists.
             update(b, historical = false) {
@@ -47,11 +62,15 @@ export function fakeLW() {
         },
         applyOptions(x) { chart.applied.push(x); },
         scales: [],                         // [id, paneIndex, options] for every priceScale(id, pane).applyOptions(options)
-        priceScale(id, pane = 0) { return { applyOptions(x) { chart.scales.push([id, pane, x]); } }; },
+        priceScale(id, pane = 0) {
+          return { applyOptions(x) { chart.scales.push([id, pane, x]); },
+            options: () => Object.assign({ autoScale: true }, ...chart.scales.filter(x => x[0] === id && x[1] === pane).map(x => x[2])) };
+        },
         // The price pane (300 px) and one pane (100 px) per pane index a series was added to.
         panes() {
           const n = Math.max(1, ...chart.series.filter(x => !x.removedFrom).map(x => x.pane + 1));
-          return Array.from({ length: n }, (_, i) => ({ getHeight: () => i ? 100 : 300, setHeight() {}, paneIndex: () => i }));
+          return Array.from({ length: n }, (_, i) => ({ getHeight: () => i ? 100 : 300, setHeight() {}, paneIndex: () => i,
+            getSeries: () => chart.series.filter(x => !x.removedFrom && x.pane === i) }));
         },
         removeSeries(s) { s.removedFrom = true; },
         // One time scale per chart: tests set `logical`, fire `rangeSubs` and read `setLogical` (setVisibleLogicalRange calls).
@@ -98,6 +117,8 @@ export function fakeSource(cfg = {}) {
       calls.push({ fn: 'charts', s, res, q });
       const out = { exposure: q.layers.includes('exposure') ? d.exposure : undefined, layers: {} };
       if ('plan' in cfg) out.plan = cfg.plan;
+      // cfg.gated: API layers the plan does not include (status "gated", no data), like the chart API
+      for (const l of cfg.gated || []) if (q.layers.includes(l)) { out.layers[l] = { status: 'gated' }; out[l] = l === 'exposure' ? [] : undefined; }
       return out;
     },
   };

@@ -2,11 +2,13 @@ import { COLORS, DEFAULT_DAYS, INTRADAY, LINE_STYLES, MAX_DAYS, NARROW, NOTE, RE
 import { global } from './env.js';
 import { injectCss } from './css.js';
 import { dayOf, etTime, fmtClock, fmtDay, fmtTime, sessionOf } from './time.js';
-import { big, esc, floorIndex, num } from './util.js';
+import { big, cutGaps, esc, floorIndex, num } from './util.js';
+import { createPercentLevels } from './percent-levels.js';
 import { chartEngineSource } from './source.js';
 import { getLicenseKey, planRank, upgradeHref } from './plans.js';
 import { activePlugins } from './registry.js';
 import { createTheme } from './theme.js';
+import { createDisplay, DISPLAY_DEFAULTS } from './display.js';
 import { createLayout } from './components/layout.js';
 import { placeBrand } from './components/brand.js';
 import { createToolbar } from './components/toolbar.js';
@@ -15,7 +17,7 @@ import { createUpsell } from './components/upsell.js';
 import { createEmptyState } from './components/empty-state.js';
 import { createScreenshot } from './components/screenshot.js';
 import { createIndicators } from './components/indicators.js';
-import { levelsPlugin } from './plugins/levels.js';
+import { CORE_INDICATOR, levelsPlugin } from './plugins/levels.js';
 import { bucketOf, createLive, foldBars, foldLevels, liveUrl, percentile } from './live.js';
 
 /**
@@ -33,7 +35,7 @@ function buildIndicators(plugins) {
   const groupOf = name => {
     let g = groups.find(x => x.name === name);
     if (!g) {
-      g = { id: 'ind' + groups.length, name, layers: [], plots: [], plugins: [], statusOff: new Set(), hidden: false, lastOn: null,
+      g = { id: 'ind' + groups.length, name, layers: [], plots: [], plugins: [], statusOff: new Set(), hidden: false,
         inputs: typeof document !== 'undefined' ? document.createElement('div') : null };
       groups.push(g);
     }
@@ -116,9 +118,9 @@ export function mountChart(container, options, hooks = {}) {
     feed: null,                             // the live lane's {mode: 'live' | 'delayed', delay} (welcome); kept after it closes
     noKey: !o.source && !o.apiKey,          // locks like the free plan until a key's plan comes back (see lockedPlan)
     right: 0,                               // px a plugin keeps free at the price pane's right edge (ctx.reserveRight)
-    view: { volume: true, grid: true, legend: true } };     // view: the Settings menu
+    view: Object.assign({ volume: true, grid: true, legend: true }, DISPLAY_DEFAULTS) };     // view: the Settings menu
   /** What the last load drew: bars, the exposure rows on bar times (by time too), and notes for the legend. */
-  const data = { bars: [], byTime: new Map(), exposure: [], gexByTime: new Map(), notes: [] };
+  const data = { bars: [], byTime: new Map(), exposure: [], gexByTime: new Map(), notes: [], gated: [] };
   const query = {};                       // extra charts() parameters, set by plugins
   const intraday = () => INTRADAY.includes(state.res);
   /**
@@ -155,14 +157,11 @@ export function mountChart(container, options, hooks = {}) {
     groups, styles, defaultStyle, corePlugin: levelsPlugin,
     /** An indicator is on when one of its layers is on (drawn, or hidden with the legend's 👁). */
     groupOn: g => g.layers.some(([k]) => active(k)),
-    /** Turns an indicator's layers off (remembering which were on) or back on (those, else its defaults, else the first). */
+    /** An indicator's switch: all its layers on (those the key's plan includes) or all off. */
     setGroup(g, wanted) {
-      const mine = g.layers.map(([k]) => k), open = mine.filter(k => !locked(k));
+      const mine = g.layers.map(([k]) => k);
       const rest = [...state.layers].filter(k => !mine.includes(k));
-      if (!wanted) { g.lastOn = mine.filter(k => state.layers.has(k)); return view.api.setLayers(rest); }
-      const defaults = g.plugins.flatMap(p => p.defaults || []).filter(k => open.includes(k));
-      const back = (g.lastOn && g.lastOn.length ? g.lastOn : defaults.length ? defaults : open.slice(0, 1));
-      return view.api.setLayers(rest.concat(back));
+      return view.api.setLayers(wanted ? rest.concat(mine.filter(k => !locked(k))) : rest);
     },
     /** Sets a plot's style and applies it (quiet: the caller redraws once after several). */
     setStyle(id, patch, quiet) {
@@ -194,21 +193,33 @@ export function mountChart(container, options, hooks = {}) {
       tickMarkFormatter: (t, type) => (type <= 2 ? fmtDay : fmtClock).format(new Date(t * 1000)) },
     localization: { timeFormatter: t => intraday() ? fmtTime.format(new Date(t * 1000)) + ' ET' : fmtDay.format(new Date(t * 1000)) },
   });
-  const theme = createTheme(root, chart, o);
+  let display = null;                     // how the price series is drawn (display.js), once the candles exist
+  const theme = createTheme(root, chart, o, name => { if (display) display.theme(name); });
   // A level line: a step line through the day and a dotted line at its latest value. On a phone, and while a plugin draws
   // over the right edge of the price pane (reserveRight, e.g. the GEX profile's panel), the axis label keeps the colour and
-  // drops the title: the title sits in the pane, over what the plugin draws there.
+  // takes the level's short title ("CW", "+1σ"; none when it has none): the title sits in the pane, over what the plugin
+  // draws there, and two levels of near colours (a wall, the expected move) still read apart.
   // Levels do not drive the price scale (it fits the candles): a far wall is off screen, its value stays in the legend, and
   // dragging the price axis brings it in.
   const levels = [];
   const titlesOff = () => !!state.tiny || state.right > 0;
-  const applyTitles = () => { for (const [x, title] of levels) x.applyOptions({ title: titlesOff() ? '' : title }); };
-  /** A level line; with plotId its colour, width, style and visibility follow the plot's style (bindPlot). */
-  const level = (color, title, plotId) => {
-    const x = chart.addSeries(LW.LineSeries, { color, title: titlesOff() ? '' : title, lineWidth: 1, lineType: LW.LineType.WithSteps,
+  const titleOf = (title, short) => (titlesOff() ? short || '' : title);
+  const applyTitles = () => { for (const [x, title, short] of levels) x.applyOptions({ title: titleOf(title, short) }); };
+  // On a Percent or Indexed to 100 scale the candles draw the levels' lines and labels (percent-levels.js).
+  const percentLevels = createPercentLevels(chart);
+  /**
+   * A level line; with plotId its colour, width, style and visibility follow the plot's style (bindPlot). A point without a
+   * value is a gap in the line (cutGaps: lightweight-charts would join across it). `short`: the title where the full one
+   * does not fit (see above).
+   */
+  const level = (color, title, plotId, short) => {
+    const opts = { color, title: titleOf(title, short), lineWidth: 1, lineType: LW.LineType.WithSteps,
       priceLineVisible: true, priceLineStyle: LW.LineStyle.Dotted, priceLineWidth: 1, priceLineColor: color,
-      lastValueVisible: true, crosshairMarkerVisible: false, autoscaleInfoProvider: () => null });
-    levels.push([x, title]);
+      lastValueVisible: true, crosshairMarkerVisible: false, autoscaleInfoProvider: () => null };
+    const x = percentLevels.track(chart.addSeries(LW.LineSeries, opts), opts);
+    const setData = x.setData;
+    x.setData = d => setData(cutGaps(d || []));
+    levels.push([x, title, short]);
     if (plotId) bindPlot(plotId, x);
     return x;
   };
@@ -234,6 +245,8 @@ export function mountChart(container, options, hooks = {}) {
     LW, chart, root, options: o, colors: COLORS, level, intraday, on, lockedPlan, upgradeHref: view.upgradeHref,
     /** True for a layer that is on but hidden with the legend's 👁 (on() is false for it): e.g. keep its pane, empty. */
     hidden: hiddenLayer,
+    /** True when the last load's answer gave API layer `apiLayer` as status "gated" (the key's plan does not include it). */
+    gated: apiLayer => data.gated.includes(apiLayer),
     get plan() { return state.plan; },
     get candles() { return candles; },
     get bars() { return data.bars; },
@@ -264,7 +277,7 @@ export function mountChart(container, options, hooks = {}) {
     get reservedRight() { return state.right; },
     /** Draws again from the last answer, no request: every plugin's draw(), then the legend. */
     redraw: () => view.redraw(),
-    util: { etTime, dayOf, sessionOf, floorIndex, esc, num, big, RES_SECONDS },
+    util: { etTime, dayOf, sessionOf, floorIndex, esc, num, big, cutGaps, RES_SECONDS },
   };
   // Plugins attach before the candles exist, so the series they add are drawn behind them. Each gets the context with
   // addControl putting its options into its own indicator's Settings, or into the indicator it names. apiLayers gets the
@@ -287,10 +300,20 @@ export function mountChart(container, options, hooks = {}) {
 
   candles = chart.addSeries(LW.CandlestickSeries,
     { upColor: COLORS.up, downColor: COLORS.down, borderVisible: false, wickUpColor: COLORS.up, wickDownColor: COLORS.down });
+  percentLevels.setCandles(candles);
   const volume = chart.addSeries(LW.HistogramSeries, { priceScaleId: 'vol', priceFormat: { type: 'volume' }, priceLineVisible: false, lastValueVisible: false });
   chart.priceScale('vol').applyOptions({ visible: false, scaleMargins: { top: 0.82, bottom: 0 } });
-  /** The Settings menu's switches: volume, grid lines, legend (theme goes through setTheme). */
+  /**
+   * The Settings menu: volume, grid lines, legend, and the chart display (display.js: chart type, price scale, crosshair,
+   * last price line and label, watermark). The theme goes through setTheme.
+   */
   view.applySetting = (k, v) => {
+    if (k in DISPLAY_DEFAULTS) {
+      display.apply(k, v);
+      if (k === 'scaleMode') percentLevels.setMode(v === 'percent' || v === 'indexed');
+      toolbar.renderDisplay();
+      return;
+    }
     state.view[k] = !!v;
     if (k === 'volume') volume.applyOptions({ visible: !!v });
     if (k === 'grid') chart.applyOptions({ grid: { vertLines: { visible: !!v }, horzLines: { visible: !!v } } });
@@ -304,7 +327,9 @@ export function mountChart(container, options, hooks = {}) {
   const closeLine = chart.addSeries(LW.LineSeries, { color: COLORS.line, lineWidth: 2, priceLineVisible: true, lastValueVisible: true,
     crosshairMarkerVisible: true, visible: false });
   let lineMode = false;
-  const CLEAR = { color: 'transparent', wickColor: 'transparent', borderColor: 'transparent' };
+  display = createDisplay(view, chart, LW, candles, closeLine);
+  /** True while the price scale fits the data (the Settings menu's Auto scale). */
+  view.scaleAuto = () => display.autoScale();
 
   const legend = createLegend(view, chart);
   const upsell = createUpsell(view);
@@ -318,6 +343,7 @@ export function mountChart(container, options, hooks = {}) {
     if (h > 0) for (let i = 1; i < panes.length; i++) panes[i].setHeight(Math.max(60, Math.round(h * 0.2)));
     placeBrand(brandEl, chart);
     legend.place();
+    if (display) display.placeAxis();
   };
   // Phones: resolutions, ranges and Indicators in the toolbar; the plugins' toolbar controls move into the Indicators menu;
   // a one-line legend; level labels on the price axis without their titles.
@@ -460,7 +486,7 @@ export function mountChart(container, options, hooks = {}) {
       emptyState.show(r.error || 'no bars');
       Object.assign(raw, { bars: [], charts: {}, layers, q });
       data.bars = []; data.byTime = new Map(); data.exposure = []; data.gexByTime = new Map();
-      for (const x of [candles, volume, closeLine]) x.setData([]);
+      volume.setData([]); display.clear();
       call('clear');
       legend.render(null, null);
       return;
@@ -594,21 +620,18 @@ export function mountChart(container, options, hooks = {}) {
     const stored = data.bars.filter(b => b.source !== 'spot'), allQuotes = stored.length > 0 && stored.every(quoteMid);
     lineMode = intraday() && stored.length > 0
       && stored.filter(b => b.open === b.high && b.high === b.low && b.low === b.close).length >= 0.8 * stored.length;
-    candles.applyOptions({ lastValueVisible: !lineMode, priceLineVisible: !lineMode });
-    closeLine.applyOptions({ visible: lineMode });
-    closeLine.setData(lineMode ? data.bars.map(b => ({ time: b.time, value: b.close })) : []);
-    candles.setData(data.bars.map(b => lineMode ? Object.assign({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close }, CLEAR)
-      : b.source === 'spot'
-        || (quoteMid(b) && (allQuotes || state.res === '1m' || (intraday() && sessionOf(b.time) !== 'rth')))
-      ? { time: b.time, open: b.open, high: b.high, low: b.low, close: b.close,
-          color: b.close >= b.open ? COLORS.spotUp : COLORS.spotDown, wickColor: b.close >= b.open ? COLORS.spotUp : COLORS.spotDown }
-      : { time: b.time, open: b.open, high: b.high, low: b.low, close: b.close }));
+    // lineMode: a line of closes; the candles stay, transparent, for the price scale, the levels and the markers.
+    display.setData(data.bars.map(b => ({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close,
+      muted: b.source === 'spot' || (quoteMid(b) && (allQuotes || state.res === '1m' || (intraday() && sessionOf(b.time) !== 'rth'))) })), lineMode);
     volume.setData(data.bars.map(b => b.volume == null || quoteMid(b) || partVolume(b) ? { time: b.time } : { time: b.time, value: b.volume,
       color: b.close >= b.open ? COLORS.volUp : COLORS.volDown }));
     data.notes = [];
     if (c.error && o.debug) data.notes.push(`layers: ${c.error}`);
     // A layer the plan does not include also comes back as status "gated" with no data (an API without a plan field).
     const gated = layers.filter(x => c.layers && c.layers[x] && c.layers[x].status === 'gated');
+    data.gated = gated;
+    // Said in the legend, with an Upgrade link (a plugin says it for its own indicators: { gated: name } from legend()).
+    if (gated.includes('exposure') && ['levels', 'maxpain'].some(on)) data.notes.push({ gated: CORE_INDICATOR });
     upsell.render();
     setExposure(layers.includes('exposure') ? c.exposure || [] : []);
     call('draw', c);
@@ -620,7 +643,7 @@ export function mountChart(container, options, hooks = {}) {
       const shift = firstBefore == null ? -1 : data.bars.findIndex(b => b.time === firstBefore);
       if (lr && shift > 0) ts.setVisibleLogicalRange({ from: lr.from + shift, to: lr.to + shift });
     } else {
-      if (mode === 'fit') autoScalePrices();
+      if (mode === 'fit') { autoScalePrices(); toolbar.renderDisplay(); }
       restoreView(view_);
     }
     liveRender();                                         // a reload never sets a live candle back
@@ -819,8 +842,7 @@ export function mountChart(container, options, hooks = {}) {
     if (!f || (t < last && !data.byTime.has(t))) return false;        // lightweight-charts cannot insert a bar there
     const old = t < last;
     try {
-      candles.update(Object.assign({ time: t, open: f.open, high: f.high, low: f.low, close: f.close }, lineMode ? CLEAR : {}), old);
-      if (lineMode) closeLine.update({ time: t, value: f.close }, old);
+      display.update({ time: t, open: f.open, high: f.high, low: f.low, close: f.close }, old);
       volume.update(f.volume == null ? { time: t } : { time: t, value: f.volume,
         color: f.close >= f.open ? COLORS.volUp : COLORS.volDown }, old);
     } catch (e) { return false; }
@@ -849,6 +871,9 @@ export function mountChart(container, options, hooks = {}) {
   // Dragging or zooming to an edge loads the next window (after the reader touched the chart: see lazy.armed).
   const arm = () => { lazy.armed = true; };
   for (const ev of ['pointerdown', 'mousedown', 'touchstart', 'wheel']) $('.fac-canvas').addEventListener(ev, arm, { passive: true });
+  // Dragging or double-clicking the price scale turns its auto scale off or on: the time bar's auto button follows.
+  const scaleChanged = () => setTimeout(() => { if (!destroyed) toolbar.renderDisplay(true); }, 0);
+  for (const ev of ['pointerup', 'touchend', 'dblclick', 'wheel']) $('.fac-canvas').addEventListener(ev, scaleChanged, { passive: true });
   const timeScale = chart.timeScale();
   if (typeof timeScale.subscribeVisibleLogicalRangeChange === 'function') timeScale.subscribeVisibleLogicalRangeChange(lr => {
     if (!lr || !lazy.armed || !started || destroyed || !raw.bars.length) return;

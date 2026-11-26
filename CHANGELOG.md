@@ -1,5 +1,85 @@
 # Changelog
 
+## 1.1.0 — 2026-11-25
+
+- **Level events** (FlashAlpha layer `events`, Growth) is released: markers on the candles where the price was rejected
+  at a GEX level (▼ / ▲), broke it (■) or crossed the gamma flip (●), regime flips that held 5 minutes (+γ / −γ), and day
+  markers (OPEX, earnings, expiry roll, the largest open interest change). The legend counts per level how many touches
+  held (`PW held 10/13`); hovering a bar lists its events. Page: docs/indicators/level-events.md.
+- **0DTE hedging flow** (FlashAlpha layer `hedgeflow`, Growth) is released: the stock dealers had to buy or sell since
+  the open to hedge today's 0DTE trades, in a pane under the price (blue above zero, orange below), with the flow per bar,
+  the call and put legs, divergence markers, and `$Δ` or `% move` units (`options.hedgeUnits`, `setHedgeUnits`).
+  Page: docs/indicators/0dte-hedging-flow.md.
+- **Expiry heatmap** (FlashAlpha layer `expiries`, Growth) is released: net GEX (or delta, vanna, charm) by strike and by
+  expiration in a panel beside the chart, with totals per strike and per expiration, the levels' strikes tagged, and the
+  lens, the strikes shown (`options.expiryRows`) and values in cells in its header. Page: docs/indicators/expiry-heatmap.md.
+- The **Strike heatmap** and the **GEX profile** are two indicators (they were the layers of "GEX by strike"), each with
+  its own value per strike: `options.lens` takes one lens for all, or `{ heatmap, profile, expiries }`;
+  `setLens(lens, layer)` sets one. Their page keeps its address: docs/indicators/gex-by-strike.md.
+- Fix: on a **Percent** or **Indexed to 100** price scale the level lines and their labels were off (`Call wall 0.00%`):
+  Lightweight Charts measures each series from its own first value. While one of those scales is on, the candles draw
+  the levels' price lines and labels (from the candles' base) and their lines (`src/percent-levels.js`).
+- Fix: Lightweight Charts joins a line across a point without a value, so a line "cut between sessions" was drawn with a
+  slope from one session to the next (Net GEX, the 0DTE hedging flow, the metrics pane, the level lines). The point before
+  a gap is now transparent. Plugins: `ctx.util.cutGaps(points, type)` does it for their own series.
+- Fix: the legend of a pane under the price (Net GEX, the 0DTE hedging flow) sat up to 25 px too high, over the pane
+  above it, after an indicator was turned on, until the pointer moved: it is placed where Lightweight Charts lays the pane
+  out, and again whenever that pane changes size.
+- Fix: a legend line longer than the plot area ran under the price scale (and under a docked panel). The legend ends at
+  the plot area, a line that does not fit drops its last values for "…" (their text on hover; the title and the ⓘ stay),
+  and each line sits on a faint backdrop so a level line or a marker under it no longer runs through its text.
+- Fix: the axis label and price line of Net GEX and of the 0DTE hedging flow take the colour of the latest value's side
+  of zero (a negative Net GEX had a green label).
+- Expected move in **light green / light red** (`#80cbc4` / `#ef9a9a`), so its lines and labels no longer read as the call
+  wall's green and the put wall's red next to them.
+- Level labels on the price scale keep a **short title** where the full one does not fit (phones, the GEX profile at the
+  pane's right edge): `CW`, `PW`, `Flip`, `MP`, `0DTE`, `+1σ`, `−1σ` (they had no title there). Plugins:
+  `ctx.level(color, title, plotId, short)`.
+- Level events: the **0DTE magnet's events are off by default** (it is touched many times a day; on in the Style tab),
+  and zoomed out (bars under 8 px wide) the markers show their shapes without their tags.
+- Expiry heatmap on a phone: docked under the chart at 60 % of its height (was 40 %: one row of strikes showed), its
+  header on one line ("Values", the snapshot's time left out).
+- A plan without an indicator's data (the chart API answers its layer `"gated"`): the legend names those indicators on
+  one line, **Not in your plan: GEX Levels, Net GEX, …**, with an **Upgrade** link (**Sign up** without a key). The
+  strike heatmap and the GEX profile no longer say "no strike data in this window" then. Plugins: `ctx.gated(apiLayer)`,
+  and `{ gated: name }` from `legend()`.
+- Without a key the account button says **Sign up**, also when the chart API names a plan for the keyless answer (it
+  said "Free").
+- GEX Levels: the magnet's layer is **0DTE magnet** in the Indicators menu, the Style tab, the legend and on the price
+  scale (`0DTE` where the full title does not fit), so it no longer reads as the 0DTE hedging flow.
+- Touch screens: the legends have no hide / options / remove buttons (they sat over the values); the Indicators menu does
+  the same. A plugin's panel keeps its own.
+- **Expected move** (FlashAlpha layer `em`, Growth) is released: each session's options-implied 1σ from its 9:30 ET
+  open, **+1σ** dotted green and **−1σ** dotted red with the band between them filled faintly (Band fill in the Style
+  tab). On 1w the band is the week's (the first session's 1σ × √5 from the week's
+  open). The legend shows the band, the 1σ and how many finished sessions in view stayed inside it
+  (`Inside 14/20 (70%)`); the session's IV30, RV20, VRP and VIX state moved into its ⓘ. Hovering a bar draws nodes on
+  its close and on the band and a box above them (the close in σ from the open, the distance to ±1σ in percent). One name everywhere:
+  EM +1σ, EM −1σ. Page: docs/indicators/expected-move.md.
+- Legend: every ⓘ sits right after its indicator's name, before the values (it used to come after them).
+- Legend: no more "Max pain (daily, close …)" note under the legend before the first intraday max pain; the daily
+  value stays on the GEX Levels line as "Max pain (daily)". No more "Daily levels (close …)" note either (1d / 1w):
+  the daily levels are still drawn, their values are no longer written under the legend.
+- More of Lightweight Charts, laid out like TradingView. A **chart type** menu next to Indicators (its icon shows the
+  type): candles, hollow candles, bars, line, area, baseline (from the first close) or Heikin Ashi; the legend keeps the
+  real OHLC. **%**, **log** and **auto** buttons at the right of the time bar (auto follows the chart: dragging the price
+  scale turns it off, a double click on it back on). **Settings** in sections: Appearance (theme, grid lines, a
+  **watermark** with the symbol and the interval), Scales (regular, logarithmic, percent or indexed to 100 from the
+  candles' first bar; placement right or left; auto scale; invert; price label; last price line), Crosshair (free, magnet
+  on the close, magnet on OHLC, hidden) and Status line (legend, volume).
+  The candles stay the price series (levels, markers and plugins keep using them): another type draws over them.
+- Indicators menu like TradingView: an indicator with one layer is one row (its switch, its name, its options); one with
+  several layers keeps its name, its switch and a row per layer. That switch turns all its layers on (those the plan
+  includes) or all off, and is half-ticked while only some are on. The plugin option `defaults` is no longer used.
+- Legend like TradingView: a fold button under the price pane's indicator lines hides them (the symbol and its bar stay;
+  folded, the button shows how many indicators are folded) and shows them again.
+- The legend no longer moves under the pointer: each indicator's line is one line (its parts never wrap), and the notes
+  show wherever the pointer is.
+- Plugins: `legendLevels(row, parts, prev, indicator, at)` is called at every bar, with the row `{ time }` (and `prev`
+  null) where there is no exposure row, so a layer with data of its own fills its line there too; `at` is `{ time, y }`,
+  the crosshair's y in the price pane (null off the chart), for a part that follows the pointer. Values that used to be
+  extra `legend()` lines under the pointer belong on the indicator's line.
+
 ## 1.0.0 — 2026-11-24
 
 - First release on npm and GitHub as **tradingview-gex-flashalpha**. It ships the changes listed under 0.9.0
@@ -75,7 +155,7 @@
   the indicator's first layer that is on.
 - Levels styled like the GEX-by-strike chart (@flashalpha-lab/gex-charts): call wall `#059669`, put wall `#f84040`
   (solid), gamma flip `#fbbf24` and max pain `#a78bfa` (dashed, 2 px), an unverified flip in the flip colour at 45 %
-  (was grey); in the FlashAlpha layer bundle the 0DTE magnet `#f472b6` (dashed).
+  (was grey); in the FlashAlpha layer bundle the 0DTE magnet `#f472b6` (dashed), the expected move `#94a3b8`.
 - The level lines are cut between sessions: no step from one session's level to the next (the first bar of a session
   is a gap).
 - The gamma regime is tinted behind the candles, either side of the flip (green above: "Positive gamma · moves tend to
