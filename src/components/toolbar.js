@@ -1,6 +1,7 @@
 import { ET, MAX_DAYS, PLAN_NAMES, RANGES, RES_LABELS, RESOLUTIONS } from '../constants.js';
 import { esc } from '../util.js';
-import { ICONS } from './layout.js';
+import { ICONS, TYPE_ICONS } from './layout.js';
+import { CHART_TYPES } from '../display.js';
 
 const fmtClock = new Intl.DateTimeFormat('en-US', { timeZone: ET, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
 
@@ -14,10 +15,10 @@ const fullscreenEnabled = () => !!(document.fullscreenEnabled || document.webkit
 
 /**
  * The controls, laid out like a TradingView chart. Top toolbar, left: the symbol dropdown with a search box, the interval
- * dropdown, the Indicators menu (components/indicators.js) and plugin controls; right: Layout (in a chart group: one to
- * four charts, filled by group.js), Settings (theme, volume, grid,
- * legend), Fullscreen, Take a screenshot, and "Sign up" (no plan: signed out) or the plan's name (signed in).
- * Time bar under the chart: ranges, session, and the ET clock. On phones the plugins' toolbar controls move into the
+ * dropdown, the chart type menu, the Indicators menu (components/indicators.js) and plugin controls; right: Layout (in a
+ * chart group: one to four charts, filled by group.js), Settings (appearance, scales, crosshair, status line), Fullscreen,
+ * Take a screenshot, and "Sign up" (no plan: signed out) or the plan's name (signed in).
+ * Time bar under the chart: ranges, session, the ET clock and the price scale's % (percent), log and auto buttons. On phones the plugins' toolbar controls move into the
  * Indicators menu ("more") and the clock is hidden. view.api (set once the chart's methods exist) receives the clicks;
  * view.applySetting and view.screenshot (set by the chart) do the Settings and the screenshot.
  */
@@ -177,16 +178,43 @@ export function createToolbar(view) {
     };
   }
 
+  // --- Chart type menu (next to Indicators) and the price scale's % log auto (time bar), like TradingView ------------------
+  const typeMenu = $('[data-g="type"]');
+  /** scaleOnly: just the % log auto buttons (the reader dragged or zoomed the chart). */
+  function renderDisplay(scaleOnly) {
+    if (typeMenu && !scaleOnly) {
+      const t = state.view.chartType, label = (CHART_TYPES.find(x => x[0] === t) || CHART_TYPES[0])[1];
+      typeMenu.querySelector('.fac-dd-val').innerHTML = TYPE_ICONS[t] || TYPE_ICONS.candles;
+      typeMenu.querySelector('button').title = 'Chart type: ' + label;
+      const list = typeMenu.querySelector('.fac-list');
+      list.innerHTML = CHART_TYPES.map(([v, l]) => `<div class="fac-opt${v === t ? ' on' : ''}" role="option" aria-selected="${v === t}" data-v="${v}">`
+        + `<span class="fac-type-opt">${TYPE_ICONS[v]}${esc(l)}</span></div>`).join('');
+      list.querySelectorAll('.fac-opt').forEach(el => { el.onclick = () => { closeMenus(); view.applySetting('chartType', el.dataset.v); }; });
+    }
+    if (view.scaleAuto) state.view.autoScale = view.scaleAuto();
+    const mode = state.view.scaleMode;
+    buttons('scale', [['%', 'percent', 'Percent scale'], ['log', 'log', 'Logarithmic scale'],
+      ['auto', 'auto', 'Auto scale: the price scale fits the bars']],
+    v => (v === 'auto' ? !!state.view.autoScale : v === mode),
+    v => (v === 'auto' ? view.applySetting('autoScale', !state.view.autoScale) : view.applySetting('scaleMode', v === mode ? 'normal' : v)));
+  }
+
   // --- Settings ----------------------------------------------------------------------------------------------------------
   const settings = $('.fac-settings');
+  const PICKS = ['scaleMode', 'scaleSide', 'crosshair'];
+  const SWITCHES = ['autoScale', 'invert', 'volume', 'grid', 'legend', 'priceLine', 'priceLabel', 'watermark'];
   function syncSettings() {
     if (!settings) return;
+    // Dragging the price scale turns lightweight-charts' auto scale off: the switch shows what the chart does now.
+    if (view.scaleAuto) state.view.autoScale = view.scaleAuto();
     settings.querySelector('[data-s="theme"]').value = o.theme;
-    for (const k of ['volume', 'grid', 'legend']) settings.querySelector(`[data-s="${k}"]`).checked = state.view[k];
+    for (const k of PICKS) settings.querySelector(`[data-s="${k}"]`).value = state.view[k];
+    for (const k of SWITCHES) settings.querySelector(`[data-s="${k}"]`).checked = !!state.view[k];
   }
   if (settings) {
     settings.querySelector('[data-s="theme"]').onchange = e => view.api.setTheme(e.target.value);
-    for (const k of ['volume', 'grid', 'legend'])
+    for (const k of PICKS) settings.querySelector(`[data-s="${k}"]`).onchange = e => view.applySetting(k, e.target.value);
+    for (const k of SWITCHES)
       settings.querySelector(`[data-s="${k}"]`).onchange = e => view.applySetting(k, e.target.checked);
   }
 
@@ -235,7 +263,8 @@ export function createToolbar(view) {
   function renderAccount() {
     renderFeed();
     if (!account || !state.answered) return;
-    const plan = state.plan != null ? String(state.plan).toLowerCase() : null;
+    // Without a key (signed out) "Sign up", even when the chart API names a plan for the keyless answer ("free").
+    const plan = state.plan != null && !state.noKey ? String(state.plan).toLowerCase() : null;
     if (plan) {
       account.className = 'fac-account fac-tier';
       account.textContent = PLAN_NAMES[plan] || state.plan;
@@ -265,6 +294,7 @@ export function createToolbar(view) {
     buttons('session', [['RTH', 'rth', 'Regular trading hours: 9:30 to 16:00 ET'],
       ['ETH', 'eth', 'Extended trading hours: adds pre-market and after-hours']], v => v === o.session, v => api.setSession(v));
     if (view.indicators) view.indicators.render();
+    renderDisplay();
     renderAccount();
   }
 
@@ -273,6 +303,7 @@ export function createToolbar(view) {
     placeControls,
     render,
     renderAccount,
+    renderDisplay,
     destroy() {
       document.removeEventListener('click', onDocClick);
       document.removeEventListener('fullscreenchange', syncFullscreen);

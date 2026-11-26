@@ -48,7 +48,7 @@ The key carries the plan it was minted with until it expires. Errors: `403 secre
 |---|---|
 | Free | bars only |
 | Basic | `exposure` (walls, gamma flip, max pain, net GEX, regime, 0DTE magnet, vanna / charm / delta exposure) on scope `all` |
-| Growth | plus `strikes`, `daily`, `metrics`, and the scopes `zero_dte`, `front`, `monthly` |
+| Growth | plus `strikes`, `events`, `daily`, `metrics`, `expiries`, and the scopes `zero_dte`, `front`, `monthly` |
 | Alpha, Enterprise | plus basis `live` |
 
 A layer above the key's plan answers `{"status": "gated"}` in `layers` and has no data. `/v1/charts` also returns `plan`.
@@ -99,10 +99,10 @@ Options-positioning layers for a window.
 
 | Parameter | Default | |
 |---|---|---|
-| `resolution` | `5m` | `1m 5m 15m 1h 1d 1w`; `exposure`, `strikes`, `metrics` are intraday only |
+| `resolution` | `5m` | `1m 5m 15m 1h 1d 1w`; `exposure`, `strikes` are intraday only; `metrics` intraday and 1d (each day's last value) |
 | `from`, `to` | last 5 days, ending now | ISO 8601 UTC; the window is at most 5 days on 1m, 31 on 5m, 62 on 15m, 366 on 1h, 3660 on 1d and 1w (`400 range_too_long` with `max_days`) |
 | `sessions` | none | intraday, 1 to 5 trading sessions up to `to`, as on `/v1/bars` (`from` ignored; may exceed the 1m cap over a holiday weekend) |
-| `layers` | `exposure` | comma list of `exposure`, `strikes`, `daily`, `metrics` |
+| `layers` | `exposure` | comma list of `exposure`, `strikes`, `events`, `daily`, `metrics`, `expiries` |
 | `scope` | `all` | expiries: `all`, `zero_dte`, `front`, `monthly` |
 | `basis` | `settled` | open interest: `settled` (last close) or `live` (with today's flow) |
 | `session` | `rth` | `rth` or `eth` |
@@ -126,9 +126,13 @@ Answer:
     "as_of": "2026-11-13T19:59:00Z", "data_quality_score": 0.98, "snapshot_age_s": 12
   }],
   "strikes": [{ "ts": "2026-11-13T19:55:00Z", "rows": [[5050, 1.2e8, 10234, 8122, 2.1e9, -3.0e7, 4.0e6], [5055, -4.0e7, 7120, 9001, -1.4e9, 1.2e7, null]] }],
+  "events": [{ "ts": "…", "kind": "call_wall", "event": "rejected", "level_id": "…", "level": 5075, "prev_level": null,
+               "strength": 0.7, "detail": null, "model_ver": "…" }],
   "daily": [{ "ts": "2026-11-13T00:00:00Z", "open_call_wall": 5075, "open_put_wall": 5025, "open_gamma_flip": 5030,
               "max_pain": 5050, "iv30": 14.2, "rv20": 11.8, "vrp": 2.4, "expected_move_1d": 38.5, "opex": false, "earnings": null }],
   "metrics": [{ "ts": "…", "values": { "zero_dte_vol_context_vix": 15.3 } }],
+  "expiries": { "ts": "2026-11-13T19:45:00.000000Z", "expirations": ["2026-11-13", "2026-11-14", "2026-11-21"],
+                "strikes": [5050, 5055], "cells": [[5050, 0, 1.2e8, 2.1e9, -3.0e7, 4.0e6], [5055, 2, -4.0e7, null, null, null]] },
   "layers": {
     "exposure": { "status": "ok", "count": 78, "last_ts": "…", "missing_minutes": 0, "source": "sampler" },
     "strikes": { "status": "ok", "count": 78, "last_ts": "…" }
@@ -153,19 +157,26 @@ Answer:
   load), same shape: `regime` is `positive_gamma` when spot ≥ flip, `as_of` is the bucket's last minute,
   `data_quality_score`, `snapshot_age_s` and `model_ver` are null, and `missing_minutes` is not reported. The screener
   writes around the clock: `session=rth` keeps its rows from 09:30 to 16:00 ET, `eth` keeps all of them. Strikes, the
-  `zero_dte` scope and the `live` basis stay sampler-only.
+  heatmap (`expiries`), events, the `zero_dte` scope and the `live` basis stay sampler-only.
 - `strikes`: per bar, the last 5-minute snapshot per strike: `[strike, net_gex, call_oi, put_oi, net_dex, net_vex, net_chex]`
   (gamma, delta, vanna and charm exposure), strikes within 2% of the window's price range. `span_s`: seconds a snapshot
   covers; a window over more than one session gets 15-minute snapshots at least, and a long one coarser still (at most 600
   per answer: two months of 15m bars get 30-minute ones), so the row cap never cuts days off. Exposures have 4
   significant digits and open interest is whole.
-- `daily`: one row per session (open levels, IV30, RV20, VRP, VIX state, opex, earnings).
+- `events`: level touches, rejections, breaks, flip crossings, regime flips, and day markers (`kind: "marker"`: opex, earnings,
+  expiry roll, OI change; `detail` is JSON text).
+- `daily`: one row per session (open levels, expected move, IV30, RV20, VRP, VIX state, opex, earnings).
+- `expiries`: the latest strike × expiry snapshot in the window (taken every 15 minutes in RTH; any resolution, it is not a
+  series): the first 8 expirations, strikes within 10% of spot, `cells` as `[strike, expiration_index, net_gex, net_dex,
+  net_vex, net_chex]` (`expiration_index` points into `expirations`). `null` with status `missing` when the window has none.
 - `layers.{name}.status`: `ok`, `partial` (exposure with missing minutes), `missing` (no rows), `gated` (not in the plan),
   `unsupported_resolution`.
 
 ### `GET /v1/metrics/columns`
 
 The per-minute metric columns `metrics=` accepts: `{ "columns": ["summary_hedging_estimate_spot_up_1pct_notional_usd", …] }`.
+`hedge_flow_cumulative` and `hedge_flow_bar` are the 0DTE hedging flow (dealers' estimated signed delta-dollars on today's expiry, cumulative since the open and the last bar; `hedge_flow_call_cumulative` / `hedge_flow_put_cumulative`: its call and put legs),
+as of the minute, about 2 minutes behind; no value without a same-day expiry; on 1d each session's total.
 
 ## Errors and limits
 

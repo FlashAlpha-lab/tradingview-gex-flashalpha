@@ -66,6 +66,9 @@ export function createLegend(view, chart) {
       typeof p.format === 'function' ? p.format : num, p.note || '');
   }
 
+  /** True for an ⓘ part ({ info }): it goes right after the indicator's name. */
+  const isInfo = p => !!p && typeof p === 'object' && p.info != null;
+
   /**
    * An indicator's title and its buttons (with the chart's controls): hide / show, options, remove. `extra`: the index of
    * a paneLegends entry (options and remove only).
@@ -80,19 +83,29 @@ export function createLegend(view, chart) {
   }
 
   /**
-   * An indicator's line: its title, then (at an exposure row `g`) its plugins' parts (the core indicator starts with spot).
-   * A part of a layer that does not show values in the status line (its `layer`, else its plot's layer) is left out. A
-   * hidden indicator (👁: not drawn, still on) shows its title only, dimmed, where it was.
+   * An indicator's line: its title, then its plugins' parts (the core indicator starts with spot). At a bar with an
+   * exposure row `g` every plugin of the indicator adds its parts; at a bar without one (no exposure layer on, 1d/1w, before
+   * the open) the layer plugins still do, with the row `{ time }` (their values come from their own data), the core one
+   * not (its levels are the row's). `at` is { time, y }: the bar and the crosshair's y in the price pane (null when the
+   * pointer is off the chart), so a part can follow the pointer on the same line. A part of a layer that does not show
+   * values in the status line (its `layer`, else its plot's layer) is left out. A hidden indicator (👁: not drawn, still
+   * on) shows its title only, dimmed, where it was. The ⓘ parts come right after the title, before the values.
    */
-  function groupLine(gr, g, prev) {
+  function groupLine(gr, g, prev, at) {
     if (gr.hidden) return `<div class="sub lv fac-lg-off">${title(gr.name, gr.id, true)}</div>`;
     const layerOf = p => p && typeof p === 'object' && (p.layer || (p.plot && (gr.plots.find(x => x.id === p.plot) || {}).layer));
     // No layer that is on shows values in the status line: the title only.
-    if (!gr.layers.some(([k]) => view.active(k) && !gr.statusOff.has(k))) g = null;
+    const shows = gr.layers.some(([k]) => view.active(k) && !gr.statusOff.has(k));
+    if (!shows) g = null;
     const parts = [];
-    if (g) view.callFor(gr.plugins, 'legendLevels', g, parts, prev, gr.name);
-    const items = (g && gr.plugins.includes(view.corePlugin) ? [keyItem('Spot', g.spot && g.spot.last, prev && prev.spot && prev.spot.last)] : [])
-      .concat(parts.filter(p => !gr.statusOff.has(layerOf(p))).map(part)).filter(Boolean);
+    if (g) view.callFor(gr.plugins, 'legendLevels', g, parts, prev, gr.name, at);
+    else if (shows && at.time != null) {
+      view.callFor(gr.plugins.filter(p => p !== view.corePlugin), 'legendLevels', { time: at.time }, parts, null, gr.name, at);
+    }
+    const kept = parts.filter(p => !gr.statusOff.has(layerOf(p))), infos = kept.filter(isInfo);
+    const items = infos.map(part)
+      .concat(g && gr.plugins.includes(view.corePlugin) ? [keyItem('Spot', g.spot && g.spot.last, prev && prev.spot && prev.spot.last)] : [])
+      .concat(kept.filter(p => !isInfo(p)).map(part)).filter(Boolean);
     return `<div class="sub lv">${title(gr.name, gr.id)}${items.join('')}</div>`;
   }
 
@@ -106,30 +119,81 @@ export function createLegend(view, chart) {
    * The lines of the indicators that are on (or hidden), and of the plugins' pane entries, by pane index: 0 is the price
    * pane (the legend), others go to the top left of their pane.
    */
-  function linesByPane(time, g) {
-    const prev = g ? previousSession(g) : null, out = new Map();
+  function linesByPane(time, g, y) {
+    const prev = g ? previousSession(g) : null, out = new Map(), at = { time, y: y == null ? null : y };
     const add = (i, html) => out.set(i, (out.get(i) || []).concat(html));
     for (const gr of view.groups) {
       if (!view.groupOn(gr)) { gr.hidden = false; continue; }         // off (e.g. from the menu): no longer hidden either
       // A hidden indicator's pane stays (empty, its plugin keeps it): its line stays there.
       const pane = paneOf(view.callFor(gr.plugins, 'paneOf', gr.name).find(Boolean));
-      add(pane ? pane.paneIndex() : 0, groupLine(gr, g, prev));
+      add(pane ? pane.paneIndex() : 0, groupLine(gr, g, prev, at));
     }
     extras = time != null ? view.call('paneLegends', time).flat().filter(x => x && paneOf(x.series)) : [];
     extras.forEach((x, i) => {
       const gr = view.groups.find(y => y.name === x.indicator);
-      add(paneOf(x.series).paneIndex(), `<div class="sub lv">${title(x.name, gr && gr.id, false, i)}${(x.parts || []).map(part).join('')}</div>`);
+      const ps = x.parts || [];
+      add(paneOf(x.series).paneIndex(), `<div class="sub lv">${title(x.name, gr && gr.id, false, i)}`
+        + `${ps.filter(isInfo).concat(ps.filter(p => !isInfo(p))).map(part).join('')}</div>`);
     });
     return out;
   }
 
-  /** The pane legends at the top left of their panes (pane heights from lightweight-charts, 1 px separators). */
+  /**
+   * lightweight-charts lays out a pane it adds, or one setHeight changes, at its next frame: the pane elements are watched
+   * and the legends placed again when one of them changes size (or the plot narrows, e.g. a panel docked beside it).
+   */
+  const paneWatch = typeof ResizeObserver === 'function' ? new ResizeObserver(() => {
+    const before = plotRight;
+    place();
+    if (plotRight !== before) render(...last);    // the plot narrowed or widened: the lines are fitted again
+  }) : null;
+  let plotRight = null;                     // the last --fac-plot-right (px)
+  const watched = new WeakSet();
+  const paneEl = p => (p && typeof p.getHTMLElement === 'function' ? p.getHTMLElement() : null);
+
+  /**
+   * The pane legends at the top left of their panes: from the pane elements when lightweight-charts gives them, else from
+   * the pane heights (1 px separators). Also --fac-plot-right on the chart: the room right of the price pane's plot area
+   * (the price scale, a docked panel), which the legends keep clear of.
+   */
   function place() {
-    if (!paneBox || !chart || typeof chart.panes !== 'function') return;
+    if (!chart || typeof chart.panes !== 'function') return;
+    const panes = chart.panes(), els = panes.map(paneEl);
+    if (paneWatch) for (const el of els) if (el && !watched.has(el)) { watched.add(el); paneWatch.observe(el); }
+    const body = $('.fac-body');
+    const r0 = els[0] && els[0].getBoundingClientRect(), rb = body && body.getBoundingClientRect();
+    // The pane element is its table row (price scales on both sides): the plot is its widest cell.
+    const cells = els[0] ? [...els[0].children].map(x => x.getBoundingClientRect()) : [];
+    const plot = cells.length ? cells.reduce((a, b) => (b.width > a.width ? b : a)) : r0;
+    if (plot && rb && plot.width > 0) {
+      plotRight = Math.max(0, Math.round(rb.right - plot.right));
+      root.style.setProperty('--fac-plot-right', `${plotRight}px`);
+    }
+    if (!paneBox) return;
     const tops = [];
-    let top = 0;
-    for (const p of chart.panes()) { tops.push(top); top += (p.getHeight() || 0) + 1; }
-    paneBox.querySelectorAll('[data-pane]').forEach(el => { el.style.top = `${(tops[+el.dataset.pane] || 0) + 4}px`; });
+    if (r0 && r0.height > 0 && els.every(Boolean)) for (const el of els) tops.push(el.getBoundingClientRect().top - r0.top);
+    else { let top = 0; for (const p of panes) { tops.push(top); top += (p.getHeight() || 0) + 1; } }
+    paneBox.querySelectorAll('[data-pane]').forEach(el => { el.style.top = `${Math.round(tops[+el.dataset.pane] || 0) + 4}px`; });
+  }
+
+  /**
+   * A legend line wider than the plot area (each line is one line, never wrapped) would run under the price scale: its
+   * last parts are left out until it fits, with "…" (their text on hover). The title and the ⓘ always stay.
+   */
+  function fit(box) {
+    const lim = box.clientWidth;
+    if (!lim) return;                     // not laid out (hidden, or no layout engine)
+    for (const line of box.querySelectorAll('.lv')) {
+      if (line.scrollWidth <= lim) continue;
+      const parts = [...line.children].filter(x => !x.matches('.fac-lg-head, .fac-lg-info'));
+      const more = document.createElement('span');
+      more.className = 'fac-lg-more';
+      more.textContent = '…';
+      line.appendChild(more);
+      const cut = [];
+      while (parts.length && line.scrollWidth > lim) { const x = parts.pop(); x.hidden = true; cut.unshift(x.textContent); }
+      more.title = cut.join('  ');
+    }
   }
 
   // The buttons in the legends (the legends let clicks through to the chart everywhere else).
@@ -160,9 +224,15 @@ export function createLegend(view, chart) {
   }
   doc.addEventListener('keydown', onKey);
 
+  /**
+   * The indicator lines of the price pane folded away (the button under them, like TradingView's): the symbol and its bar
+   * stay, the button then shows how many indicators are folded. Panes of their own keep their line.
+   */
+  let folded = false, last = [null, null];
   function onClick(e) {
     const b = e.target.closest && e.target.closest('[data-act]');
     if (!b) return;
+    if (b.dataset.act === 'fold') { folded = !folded; render(...last); return; }
     const gr = view.groups.find(x => x.id === b.dataset.ind), act = b.dataset.act;
     if (act === 'settings') { if (gr && view.indicators) view.indicators.open(gr.id); return; }
     if (b.dataset.extra != null) {
@@ -180,22 +250,29 @@ export function createLegend(view, chart) {
   legend.addEventListener('click', onClick);
   if (paneBox) paneBox.addEventListener('click', onClick);
 
+  /**
+   * Draws the legends for the bar at chart time `t` (null: the latest) and the crosshair's y in the price pane. The price
+   * pane's legend keeps the same lines wherever the pointer is (one line per indicator that is on, each on one line, then
+   * the plugins' lines and the notes), so nothing below moves while the pointer moves; only the values change.
+   */
   function render(t, y) {
+    last = [t, y];
     const b = t != null ? data.byTime.get(t) : [...data.byTime.values()].at(-1);
     const time = b ? b.time : null;
     const g = time != null ? data.gexByTime.get(time) : null;
     const head = `<b>${esc(state.symbol)}</b>`;
     tips = 0;
-    const byPane = linesByPane(time, g);
+    const byPane = linesByPane(time, g, t != null ? y : null);
     if (paneBox) {
       paneBox.innerHTML = [...byPane].filter(([i]) => i > 0)
         .map(([i, html]) => `<div class="fac-legend fac-pane-lg" data-pane="${i}">${html.join('')}</div>`).join('');
       place();
-      // A pane added by this draw gets its height at lightweight-charts' next layout: placed again then.
+      // A pane added by this draw gets its height at lightweight-charts' next layout: placed again then (and by paneWatch).
       if (paneBox.firstChild && typeof requestAnimationFrame === 'function') requestAnimationFrame(place);
-    }
+      paneBox.querySelectorAll('.fac-pane-lg').forEach(fit);
+    } else place();
     if (t == null && root.classList.contains('fac-narrow')) {         // the rest shows on tap (crosshair)
-      legend.innerHTML = head + (b ? `<span class="${b.close >= b.open ? 'up' : 'dn'}">${num(b.close)}</span>` : '');
+      legend.innerHTML = `<span class="fac-lg-top">${head}${b ? `<span class="${b.close >= b.open ? 'up' : 'dn'}">${num(b.close)}</span>` : ''}</span>`;
       showTip();
       return;
     }
@@ -206,9 +283,30 @@ export function createLegend(view, chart) {
         : view.partVolume(b) ? '<span class="k">some days quote mid (no volume)</span>' : view.intraday() && sessionOf(b.time) !== 'rth' ? `<span class="k">${sessionOf(b.time)}-market</span>` : '') : '';
     const lines = [];
     const extra = time != null ? view.call('legend', time, y).flat().filter(Boolean) : [];
-    lines.push(...extra);
-    if (!g && data.notes.length) lines.push(data.notes.join(' · '));
-    legend.innerHTML = head + price + (byPane.get(0) || []).join('') + lines.filter(Boolean).map(l => `<div class="sub">${esc(l)}</div>`).join('');
+    // Indicators whose data the key's plan does not include ({ gated: name } from the core and the plugins): one line
+    // naming them, with the link to upgrade (to sign up without a key).
+    const isGated = x => x && typeof x === 'object' && x.gated;
+    const menuAt = name => { const i = view.groups.findIndex(gr => gr.name === name); return i < 0 ? Infinity : i; };
+    const gatedNames = [...new Set(data.notes.concat(extra).filter(isGated).map(x => String(x.gated)))]
+      .sort((a, b) => menuAt(a) - menuAt(b));        // in the Indicators menu's order
+    const gatedLine = !gatedNames.length ? ''
+      : `<div class="sub fac-lg-gated">Not in your plan: ${esc(gatedNames.join(', '))} `
+        + (view.state.noKey
+          ? `<a class="fac-lg-up" href="${esc(view.signupHref('legend'))}" target="_blank" rel="noopener">Sign up</a>`
+          : `<a class="fac-lg-up" href="${esc(view.upgradeHref('legend'))}" target="_blank" rel="noopener">Upgrade</a>`) + '</div>';
+    lines.push(...extra.filter(x => !isGated(x)));
+    // The notes are the load's, not the bar's: shown wherever the pointer is.
+    const notes = data.notes.filter(x => !isGated(x));
+    if (notes.length) lines.push(notes.join(' · '));
+    const inds = byPane.get(0) || [];
+    // The fold button under the indicator lines (with how many are folded while folded).
+    const fold = !inds.length || !(view.o.controls && view.$('.fac-dialog')) ? ''
+      : `<div class="sub fac-lg-foldrow"><button type="button" class="fac-lg-btn fac-lg-fold${folded ? ' on' : ''}" data-act="fold" `
+        + `aria-expanded="${!folded}" title="${folded ? 'Show indicator legend' : 'Hide indicator legend'}" `
+        + `aria-label="${folded ? 'Show indicator legend' : 'Hide indicator legend'}">${ICONS.chevron}${folded ? `<span>${inds.length}</span>` : ''}</button></div>`;
+    legend.innerHTML = `<span class="fac-lg-top">${head}${price}</span>` + (folded ? '' : inds.join('')) + fold
+      + gatedLine + (folded ? '' : lines.filter(Boolean).map(l => `<div class="sub">${esc(l)}</div>`).join(''));
+    fit(legend);
     showTip();
   }
   return { render, place };

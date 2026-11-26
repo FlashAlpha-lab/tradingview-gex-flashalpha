@@ -163,6 +163,41 @@ describe('mount', () => {
     c3.destroy();
   });
 
+  it('says "Sign up" without a key even when the chart API names a plan for the keyless answer', async () => {
+    const d = sessionData();
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async url => new Response(JSON.stringify(String(url).includes('/v1/charts/') ? { plan: 'free', layers: {}, exposure: d.exposure }
+      : String(url).includes('/v1/bars/') ? { bars: d.bars } : [{ symbol: 'SPX', last_bar: '2026-11-13T20:45:00Z' }]),
+    { status: 200, headers: { 'Content-Type': 'application/json' } });
+    try {
+      const el = host();
+      const chart = mount(el, { symbol: 'SPX', refresh: 0, lightweightCharts: fakeLW(), storage: false, baseUrl: 'https://charts.test',
+        layouts: false });
+      await tick(50);
+      assert.equal(chart.plan, 'free', 'the plan is kept (it locks the layers like the free plan)');
+      const account = el.querySelector('.fac-account');
+      assert.equal(account.textContent, 'Sign up');
+      assert.ok(account.classList.contains('fac-signup') && !account.classList.contains('fac-tier'));
+      chart.destroy();
+    } finally { globalThis.fetch = realFetch; }
+  });
+
+  it('names the indicators the plan does not include on one legend line with an Upgrade link', async () => {
+    const el = host();
+    const { chart } = open(el, { source: fakeSource({ plan: null, gated: ['exposure'] }), layers: ['levels', 'maxpain'] });
+    await tick();
+    const line = el.querySelector('.fac-legend .fac-lg-gated');
+    assert.ok(line, 'the "Not in your plan" line');
+    assert.match(line.textContent, /^Not in your plan: GEX Levels Upgrade$/);
+    const a = line.querySelector('a.fac-lg-up');
+    assert.equal(a.target, '_blank');
+    assert.match(a.href, /^https:\/\/flashalpha\.com\/pricing\?.*utm_content=legend/);
+    assert.doesNotMatch(el.querySelector('.fac-legend').textContent, /none yet in this window/, 'not the "no levels yet" reason');
+    await chart.setLayers([]);
+    assert.equal(el.querySelector('.fac-legend .fac-lg-gated'), null, 'gone with the indicator');
+    chart.destroy();
+  });
+
   it('Settings switch the theme, volume, grid lines and legend', async () => {
     const el = host();
     const { c, chart } = open(el);
@@ -185,6 +220,154 @@ describe('mount', () => {
     assert.deepEqual(c().applied.at(-1), { grid: { vertLines: { visible: false }, horzLines: { visible: false } } });
     flip('legend');
     assert.ok(el.querySelector('.fac').classList.contains('fac-nolegend'));
+    chart.destroy();
+  });
+
+  it('like TradingView: the chart type menu next to Indicators, % log auto in the time bar, Settings in sections', async () => {
+    const el = host();
+    const { c, chart } = open(el);
+    await tick();
+    const bar = [...el.querySelector('.fac-bar').children].map(x => x.dataset.g || x.className.split(' ').at(-1));
+    assert.deepEqual(bar.slice(0, 4), ['symbols', 'res', 'type', 'fac-ind-menu'], 'symbol, interval, chart type, Indicators');
+    const type = el.querySelector('[data-g="type"]');
+    assert.equal(type.querySelector('button').title, 'Chart type: Candles');
+    assert.ok(type.querySelector('.fac-dd-val svg'), 'the button shows the type\'s icon');
+    assert.deepEqual([...type.querySelectorAll('.fac-opt')].map(x => x.textContent),
+      ['Candles', 'Hollow candles', 'Bars', 'Line', 'Area', 'Baseline', 'Heikin Ashi']);
+    type.querySelector('button').click();
+    type.querySelector('.fac-opt[data-v="area"]').click();
+    assert.ok(!type.classList.contains('open'), 'picking closes the menu');
+    assert.equal(type.querySelector('button').title, 'Chart type: Area');
+    assert.equal(type.querySelector('.fac-opt.on').dataset.v, 'area');
+    assert.ok(c().series.some(s => s.type === 'Area' && !s.removedFrom));
+
+    const scale = () => [...el.querySelectorAll('[data-g="scale"] button')];
+    assert.deepEqual(scale().map(b => [b.textContent, b.classList.contains('on')]), [['%', false], ['log', false], ['auto', true]]);
+    assert.equal(el.querySelector('.fac-timebar').lastElementChild.dataset.g, 'scale', 'at the right of the time bar');
+    scale()[0].click();
+    assert.deepEqual(c().scales.at(-1), ['right', 0, { mode: 2, autoScale: true, invertScale: false }]);
+    assert.deepEqual(scale().map(b => b.classList.contains('on')), [true, false, true]);
+    scale()[1].click();
+    assert.deepEqual(scale().map(b => b.classList.contains('on')), [false, true, true], '% and log: one at a time');
+    scale()[1].click();
+    assert.equal(c().scales.at(-1)[2].mode, 0, 'log again: back to regular');
+    scale()[2].click();
+    assert.equal(c().scales.at(-1)[2].autoScale, false);
+    assert.equal(scale()[2].classList.contains('on'), false);
+    c().scales.push(['right', 0, { autoScale: true }]);             // the reader double-clicked the price scale
+    el.querySelector('.fac-canvas').dispatchEvent(new window.Event('dblclick'));
+    await tick();
+    assert.equal(scale()[2].classList.contains('on'), true, 'auto follows the chart');
+
+    const menu = el.querySelector('.fac-settings');
+    assert.deepEqual([...menu.querySelectorAll('.fac-sec')].map(x => x.textContent), ['Appearance', 'Scales', 'Crosshair', 'Status line']);
+    assert.equal(menu.querySelector('[data-s="chartType"]'), null, 'the chart type is in the toolbar');
+    chart.destroy();
+  });
+
+  it('Settings draw the chart type, price scale, crosshair, last price line and label, and the watermark', async () => {
+    const el = host();
+    const { c, LW, chart } = open(el);
+    await tick();
+    const menu = el.querySelector('.fac-settings');
+    menu.querySelector('button').click();
+    const pick = (k, v) => {
+      if (k === 'chartType') { el.querySelector(`[data-g="type"] .fac-opt[data-v="${v}"]`).click(); return; }
+      const x = menu.querySelector(`[data-s="${k}"]`); x.value = v; x.dispatchEvent(new window.Event('change'));
+    };
+    const flip = (k, v) => { const x = menu.querySelector(`[data-s="${k}"]`); x.checked = v; x.dispatchEvent(new window.Event('change')); };
+    assert.deepEqual(['scaleMode', 'scaleSide', 'crosshair'].map(k => menu.querySelector(`[data-s="${k}"]`).value),
+      ['normal', 'right', 'normal']);
+    assert.deepEqual(['autoScale', 'invert', 'priceLine', 'priceLabel', 'watermark'].map(k => menu.querySelector(`[data-s="${k}"]`).checked),
+      [true, false, true, true, false]);
+    const live = type => c().series.filter(s => s.type === type && !s.removedFrom);
+    const candles = c().series[0], first = candles.data[0], n = candles.data.length;
+
+    // Chart type: the candles stay (price scale, levels, markers), unseen, under a series of the type picked.
+    pick('chartType', 'bars');
+    const [bars] = live('Bar');
+    assert.equal(bars.data.length, n);
+    assert.equal(candles.data[0].color, 'transparent');
+    assert.deepEqual(candles.applied.at(-1), { lastValueVisible: false, priceLineVisible: false });
+    assert.deepEqual(bars.applied.at(-1), { lastValueVisible: true, priceLineVisible: true }, 'the price line moves to the bars');
+    pick('chartType', 'heikin');
+    assert.ok(bars.removedFrom, 'one series for the type picked');
+    const ha = live('Candlestick')[1], close = (first.open + first.high + first.low + first.close) / 4;
+    assert.equal(ha.data[0].close, close);
+    assert.equal(ha.data[0].open, (first.open + first.close) / 2);
+    assert.equal(ha.data[1].open, (ha.data[0].open + ha.data[0].close) / 2);
+    pick('chartType', 'line');
+    assert.ok(ha.removedFrom);
+    const line = c().series.find(s => s.type === 'Line' && s.opts.color === '#4f8cff');
+    assert.equal(line.data.length, n);
+    assert.equal(line.applied.at(-1).visible, true);
+    pick('chartType', 'area');
+    assert.deepEqual(live('Area')[0].data[0], { time: first.time, value: first.close });
+    assert.deepEqual(line.data, []);
+    pick('chartType', 'baseline');
+    assert.equal(live('Baseline')[0].applied.at(-1).baseValue.price, first.close, 'the base is the first close');
+    pick('chartType', 'candles');
+    assert.equal(live('Baseline').length + live('Area').length + live('Bar').length, 0);
+    assert.equal(candles.data[0].color, undefined, 'candles drawn again');
+    assert.deepEqual(candles.applied.at(-1), { lastValueVisible: true, priceLineVisible: true });
+
+    // Price scale: mode, invert, side (every price series moves, the volume overlay stays), auto scale.
+    pick('scaleMode', 'log');
+    assert.deepEqual(c().scales.at(-1), ['right', 0, { mode: 1, autoScale: true, invertScale: false }]);
+    flip('invert', true);
+    assert.deepEqual(c().scales.at(-1), ['right', 0, { mode: 1, autoScale: true, invertScale: true }]);
+    pick('scaleSide', 'left');
+    assert.ok(c().applied.some(x => x.rightPriceScale && x.rightPriceScale.visible === false && x.leftPriceScale.visible === true));
+    assert.equal(c().scales.at(-1)[0], 'left');
+    assert.equal(candles.options().priceScaleId, 'left');
+    assert.equal(line.options().priceScaleId, 'left');
+    assert.equal(c().series[1].options().priceScaleId, 'vol', 'the volume keeps its overlay scale');
+    pick('scaleMode', 'percent');
+    assert.ok(candles.applied.some(x => x.priceScaleId === 'fac-hop'), 'the candles go first on the scale (the percent base)');
+    assert.deepEqual(c().scales.at(-1), ['left', 0, { mode: 2, autoScale: true, invertScale: true }]);
+    c().scales.push(['left', 0, { autoScale: false }]);             // the reader dragged the price scale
+    menu.querySelector('button').click(); menu.querySelector('button').click();
+    assert.equal(menu.querySelector('[data-s="scaleMode"]').value, 'percent');
+    assert.equal(menu.querySelector('[data-s="autoScale"]').checked, false);
+    flip('autoScale', true);
+    assert.equal(c().scales.at(-1)[2].autoScale, true);
+
+    // Crosshair, last price line and label, watermark.
+    pick('crosshair', 'magnetOHLC');
+    assert.deepEqual(c().applied.at(-1), { crosshair: { mode: 3 } });
+    flip('priceLine', false);
+    assert.deepEqual(candles.applied.at(-1), { lastValueVisible: true, priceLineVisible: false });
+    flip('priceLabel', false);
+    assert.deepEqual(candles.applied.at(-1), { lastValueVisible: false, priceLineVisible: false });
+    flip('watermark', true);
+    assert.deepEqual(LW.watermarks[0].opts.lines.map(l => l.text), ['SPX', '5 minutes']);
+    chart.setTheme('light');
+    assert.equal(LW.watermarks[0].opts.lines[0].color, 'rgba(31,36,48,0.07)', 'the watermark follows the theme');
+    flip('watermark', false);
+    assert.equal(LW.watermarks[0].detached, true);
+    chart.destroy();
+  });
+
+  it('Percent and Indexed to 100: the levels\' price lines and labels go on the candles (their base), none of their own', async () => {
+    const el = host();
+    const { c, chart } = open(el, { layers: ['levels', 'maxpain'] });
+    await tick();
+    const menu = el.querySelector('.fac-settings');
+    const pick = v => { const x = menu.querySelector('[data-s="scaleMode"]'); x.value = v; x.dispatchEvent(new window.Event('change')); };
+    const candles = c().series[0], lv = c().series.slice(6, 10);
+    assert.deepEqual(lv.map(s => s.opts.title), ['Gamma flip', 'Call wall', 'Put wall', 'Max pain']);
+    pick('percent');
+    assert.deepEqual(candles.priceLines.map(l => [l.options.title, l.options.price, l.options.axisLabelVisible]),
+      [['Gamma flip', 4990, true], ['Call wall', 5050, true], ['Put wall', 4950, true], ['Max pain', 5000, true]]);
+    assert.ok(lv.every(s => s.options().lastValueVisible === false && s.options().priceLineVisible === false && s.options().title === ''),
+      'no label or title of their own');
+    pick('indexed');
+    assert.equal(candles.priceLines.length, 4);
+    pick('log');
+    assert.deepEqual(candles.priceLines, []);
+    assert.ok(lv.every(s => s.options().lastValueVisible === true && s.options().priceLineVisible === true), 'their own labels again');
+    assert.deepEqual(lv.map(s => s.options().title), ['Gamma flip', 'Call wall', 'Put wall', 'Max pain']);
+    assert.ok(lv.every(s => s.options().lineVisible === false), 'the overlay still draws their lines');
     chart.destroy();
   });
 
@@ -702,7 +885,7 @@ describe('mount', () => {
     chart.destroy();
   });
 
-  it('goes compact below 560 px and drops level titles below 480 px', async () => {
+  it('goes compact below 560 px and shortens level titles below 480 px', async () => {
     const el = host();
     const { c, chart } = open(el);
     await tick();
@@ -711,7 +894,8 @@ describe('mount', () => {
     observers.at(-1).fn([]);
     assert.ok(root.classList.contains('fac-narrow'));
     assert.ok(el.querySelector('.fac-timebar [data-g="session"]'), 'the session stays in the time bar');
-    assert.deepEqual(c().series[6].applied.at(-1), { title: '' });
+    // the short titles (the markers' tags): the label still names its level, in less room
+    assert.deepEqual([6, 7, 8, 9].map(i => c().series[i].applied.at(-1)), [{ title: 'Flip' }, { title: 'CW' }, { title: 'PW' }, { title: 'MP' }]);
     chart.destroy();
   });
 
@@ -779,7 +963,29 @@ describe('indicators', () => {
     ind(el).querySelector('[data-group]').checked = true;
     ind(el).querySelector('[data-group]').dispatchEvent(new window.Event('change'));
     await tick();
-    assert.deepEqual(chart.layers.sort(), ['levels', 'maxpain'], 'back to the layers it had');
+    assert.deepEqual(chart.layers.sort(), ['levels', 'maxpain'], 'all its layers on');
+    chart.destroy();
+  });
+
+  it('an indicator\'s switch: all its layers on or all off; half-ticked while only some are on', async () => {
+    const el = host();
+    const { chart } = open(el, { layers: ['levels'] });
+    await tick();
+    const sw = () => ind(el).querySelector('[data-group]');
+    assert.equal(sw().checked, false);
+    assert.equal(sw().indeterminate, true, 'one of two layers on');
+    // a click on a half-ticked switch ticks it: every layer on
+    sw().indeterminate = false; sw().checked = true; sw().dispatchEvent(new window.Event('change'));
+    await tick();
+    assert.deepEqual(chart.layers.sort(), ['levels', 'maxpain']);
+    assert.equal(sw().checked, true);
+    assert.equal(sw().indeterminate, false);
+    // ticked: a click turns every layer off
+    sw().checked = false; sw().dispatchEvent(new window.Event('change'));
+    await tick();
+    assert.deepEqual(chart.layers, []);
+    assert.equal(sw().checked, false);
+    assert.equal(sw().indeterminate, false);
     chart.destroy();
   });
 
@@ -1085,7 +1291,14 @@ describe('layer plugins', () => {
     const byName = n => inds[names.indexOf(n)];
     assert.ok([...byName('GEX Levels').querySelectorAll('.fac-ind-layers > *')].some(x => x.textContent.trim() === 'Magnet'));
     assert.ok(inds.every(x => !x.querySelector('.fac-ind-head .fac-badge')), 'no plan on an indicator\'s name');
-    assert.deepEqual([...byName('Pane A').querySelectorAll('.fac-ind-layers > *')].map(x => x.textContent.trim()), ['Pane A layer']);
+    // an indicator with one layer is one row, like TradingView: the layer's switch under the indicator's name, its options
+    const paneA = byName('Pane A');
+    assert.ok(paneA.classList.contains('fac-ind-one'));
+    assert.equal(paneA.querySelector('.fac-ind-head'), null);
+    assert.equal(paneA.querySelectorAll('.fac-ind-row').length, 1);
+    assert.equal(paneA.querySelector('.fac-ind-row label').textContent.trim(), 'Pane A');
+    assert.ok(paneA.querySelector('.fac-ind-row input[data-layer="pa"]'));
+    assert.ok(paneA.querySelector('.fac-ind-row [data-settings="pa"]'));
     assert.deepEqual([...byName('By strike').querySelectorAll('.fac-ind-layers > *')].map(x => x.textContent.trim()),
       ['Heat', '🔒 Profile Alpha'], 'each layer its own plan: Growth open (no label), Alpha locked on a Growth key');
     // the lens goes into By strike's Settings, the scope (no name) into the plugin's own indicator
@@ -1146,6 +1359,119 @@ describe('layer plugins', () => {
     assert.equal(removed, 1);
     panes[1].querySelector('[data-act="settings"]').click();
     assert.equal(el.querySelector('.fac-dialog .fac-dlg-sub').textContent, 'Pane ind');
+    chart.destroy();
+  });
+
+  it('pane legends sit where lightweight-charts laid the panes out; the legend ends at the plot area and cuts a long line', async () => {
+    let paneSeries = null;
+    registerLayers({
+      indicator: 'Laid out',
+      layers: [['lo', 'Laid out layer']],
+      attach(ctx) {
+        return {
+          ready() { paneSeries = ctx.chart.addSeries(ctx.LW.LineSeries, {}, 1); },
+          legendLevels(row, parts, prev, indicator) {
+            if (indicator === 'Laid out') parts.push({ info: 'about' }, { label: 'One', value: 1 }, { label: 'Two', value: 2 }, { label: 'Three', value: 3 });
+          },
+          paneOf: indicator => indicator === 'Laid out' ? paneSeries : null,
+        };
+      },
+    });
+    const el = host();
+    const { c, chart } = open(el, { layers: ['levels', 'lo'] });
+    await tick();
+    // the panes as lightweight-charts laid them out (the price pane 0-250 px, the plugin's from 251 px), its plot ending
+    // 80 px left of the chart body's right edge (the price scale)
+    const rect = (top, height, right) => () => ({ top, bottom: top + height, height, left: 0, right, width: right });
+    // (plugins registered by earlier tests may add panes of their own: every pane gets an element)
+    const els = [];
+    const elOf = i => els[i] || (els[i] = Object.assign(document.createElement('div'),
+      { getBoundingClientRect: rect(i ? 251 + (i - 1) * 121 : 0, i ? 120 : 250, 920) }));
+    const panes = c().panes;
+    c().panes = () => panes().map((p, i) => Object.assign(p, { getHTMLElement: () => elOf(i) }));
+    el.querySelector('.fac-body').getBoundingClientRect = rect(0, 400, 1000);
+    // the plot area's legend box is 300 px; a line is 9 px a character
+    const proto = window.HTMLElement.prototype;
+    Object.defineProperty(proto, 'clientWidth', { configurable: true, get() { return this.classList.contains('fac-legend') ? 300 : 0; } });
+    Object.defineProperty(proto, 'scrollWidth', { configurable: true,
+      get() { return [...this.children].filter(x => !x.hidden).reduce((a, x) => a + x.textContent.length * 9, 0); } });
+    try {
+      c().crosshair.forEach(fn => fn({ time: null }));
+      const lg = el.querySelector('.fac-pane-lgs .fac-pane-lg');
+      assert.equal(lg.style.top, '255px', 'at the pane element, not at the 300 px height');
+      assert.equal(el.querySelector('.fac').style.getPropertyValue('--fac-plot-right'), '80px');
+      // "Laid out" + ⓘ + One 1.00 Two 2.00 Three 3.00: too long for 300 px; the title and the ⓘ stay, the last values go
+      const line = lg.querySelector('.lv');
+      const shown = [...line.children].filter(x => !x.hidden).map(x => x.textContent);
+      assert.equal(shown[0], 'Laid out');
+      assert.equal(shown.at(-1), '…');
+      assert.ok(line.querySelector('.fac-lg-info:not([hidden])'), 'the ⓘ stays');
+      assert.match(line.querySelector('.fac-lg-more').title, /Three 3\.00/, 'what was cut, on hover');
+      assert.ok(line.scrollWidth <= 300);
+    } finally {
+      delete proto.clientWidth;
+      delete proto.scrollWidth;
+    }
+    chart.destroy();
+  });
+
+  it('like TradingView: one row per one-layer indicator, legend lines that stay put under the pointer, a fold button', async () => {
+    const calls = [];
+    registerLayers({
+      indicators: { one: 'One' },
+      layers: [['one', 'One layer']],
+      attach() {
+        return {
+          // its value from its own data, at any bar; the strike under the pointer on the same line
+          legendLevels(row, parts, prev, indicator, at) {
+            if (indicator !== 'One') return;
+            calls.push([Object.keys(row), at]);
+            parts.push({ label: 'One', value: row.time % 1000 }, at.y == null ? '' : `y ${at.y}`);
+          },
+        };
+      },
+    });
+    const el = host();
+    // no exposure layer on (levels off): no exposure rows
+    const { c, chart } = open(el, { layers: ['one'] });
+    await tick();
+    // the menu: one row for One (its switch, its name, its options); GEX Levels keeps its head and a row per layer
+    const one = [...el.querySelectorAll('.fac-ind')].find(x => x.textContent.includes('One'));
+    assert.ok(one.classList.contains('fac-ind-one'));
+    assert.equal(one.querySelector('[data-group]'), null);
+    const sw = one.querySelector('input[data-layer="one"]');
+    assert.equal(sw.checked, true);
+    assert.equal(one.querySelector('b').textContent, 'One');
+    assert.ok(el.querySelector('.fac-ind:not(.fac-ind-one) .fac-ind-head [data-group]'), 'GEX Levels: several layers, a head');
+    // without an exposure row the plugin still fills its line: the row { time }, and where the pointer is
+    const line = () => [...el.querySelectorAll('.fac-legend .lv')].find(x => /^One/.test(x.textContent));
+    assert.match(line().textContent, /^OneOne \d/);
+    assert.deepEqual(calls.at(-1)[0], ['time']);
+    assert.deepEqual(calls.at(-1)[1].y, null, 'no pointer: no y');
+    const lines = () => el.querySelectorAll('.fac-legend > .sub').length;
+    const before = lines();
+    c().crosshair.forEach(fn => fn({ time: chartTime('2026-11-13T15:00:00Z'), point: { x: 10, y: 42 } }));
+    assert.match(line().textContent, /y 42$/, 'the pointer\'s part on the indicator\'s own line');
+    assert.equal(lines(), before, 'the same lines under the pointer: nothing moves');
+    c().crosshair.forEach(fn => fn({ time: null, point: null }));
+    assert.equal(lines(), before);
+    // fold: the indicator lines go, the button stays with their count; again: back
+    const fold = () => el.querySelector('.fac-legend [data-act="fold"]');
+    assert.equal(fold().getAttribute('aria-expanded'), 'true');
+    fold().click();
+    assert.equal(line(), undefined);
+    assert.equal(fold().getAttribute('aria-expanded'), 'false');
+    assert.equal(fold().textContent, '1');
+    assert.equal(fold().title, 'Show indicator legend');
+    c().crosshair.forEach(fn => fn({ time: chartTime('2026-11-13T15:00:00Z'), point: { x: 10, y: 42 } }));
+    assert.equal(line(), undefined, 'stays folded under the pointer');
+    fold().click();
+    assert.ok(line());
+    // the one row's switch turns the layer off
+    sw.checked = false; sw.dispatchEvent(new window.Event('change'));
+    await tick();
+    assert.deepEqual(chart.layers, []);
+    assert.equal(fold(), null, 'no indicator line: no fold button');
     chart.destroy();
   });
 });

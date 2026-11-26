@@ -83,5 +83,5 @@ No. They are model estimates from open interest, not observed dealer positions.
 
 ---
 
-Related: [Net GEX](net-gex.md) · [GEX by strike](gex-by-strike.md) · [0DTE scope and live OI](0dte-and-live-oi.md) ·
+Related: [Net GEX](net-gex.md) · [Strike heatmap and GEX profile](gex-by-strike.md) · [0DTE scope and live OI](0dte-and-live-oi.md) ·
 [Get a free FlashAlpha API key](https://flashalpha.com/pricing?utm_source=github&utm_medium=docs&utm_campaign=tradingview-gex-flashalpha)

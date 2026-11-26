@@ -36,7 +36,7 @@
 .fac-status { color: var(--fac-muted, #8a909c); }
 .fac-body { position: relative; flex: 1; min-height: 0; }
 .fac-canvas { position: absolute; inset: 0; }
-.fac-legend { position: absolute; top: 6px; left: 10px; z-index: 3; pointer-events: none; font-variant-numeric: tabular-nums; }
+.fac-legend { position: absolute; top: 6px; left: calc(10px + var(--fac-axis-left, 0px)); right: calc(var(--fac-plot-right, 0px) + 6px); z-index: 3; pointer-events: none; font-variant-numeric: tabular-nums; }
 .fac-legend b { font-size: 14px; margin-right: 6px; }
 .fac-legend .k { color: var(--fac-muted, #8a909c); margin-left: 6px; }
 .fac-legend .up { color: #26a69a; } .fac-legend .dn { color: #ef5350; }
@@ -62,7 +62,7 @@
 .fac-credit { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 10px 4px; font-size: 10px; }
 .fac-credit a { color: var(--fac-muted, #8a909c); text-decoration: none; }
 .fac-credit a:hover { text-decoration: underline; }
-.fac-body > .fac-brand { position: absolute; left: 10px; bottom: 34px; z-index: 3; display: flex; align-items: center; gap: 5px;
+.fac-body > .fac-brand { position: absolute; left: calc(10px + var(--fac-axis-left, 0px)); bottom: 34px; z-index: 3; display: flex; align-items: center; gap: 5px;
   color: var(--fac-text, #d6d9e0); font: 600 12px/1 system-ui, sans-serif; text-decoration: none; opacity: 0.55; }
 .fac-body > .fac-brand:hover { opacity: 1; }
 .fac-body > .fac-brand img { height: 16px; }
@@ -111,6 +111,12 @@
 .fac-icon:hover, .fac-menu.open > button.fac-icon { background: var(--fac-line, #262a33); color: var(--fac-text, #d6d9e0); }
 .fac-icon[hidden], .fac-account[hidden] { display: none; }
 .fac-ttl { padding: 2px 6px 6px; font-weight: 600; }
+.fac-sec { padding: 8px 6px 2px; color: var(--fac-muted, #8a909c); font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.fac-ttl + .fac-sec { padding-top: 0; }
+.fac-type .fac-dd-btn svg { width: 18px; height: 18px; color: currentColor; }
+.fac-type-opt { display: inline-flex; align-items: center; gap: 8px; }
+.fac-type-opt svg { width: 18px; height: 18px; flex: none; }
+.fac-scale-btns button { padding: 3px 6px; }
 .fac-feed { margin-left: 6px; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .fac-feed[hidden] { display: none; }
 .fac-delayed { background: rgba(217, 119, 6, 0.15); color: #d97706; }
@@ -126,7 +132,25 @@
 .fac-narrow .fac-account { margin-left: 2px; padding: 4px 8px; }
 .fac-narrow .fac-feed { margin-left: 2px; padding: 2px 6px; font-size: 11px; }
 .fac-narrow .fac-sym-panel { width: 220px; }
-.fac-legend .lv { display: flex; flex-wrap: wrap; gap: 0 12px; }
+/* An indicator's line stays one line whatever its values (no wrap: the lines below never move as the pointer moves); the
+   legend ends at the plot area (--fac-plot-right: the price scale, a docked panel) and a longer line drops its last parts
+   for "…" (legend.js fit). Each line sits on a faint backdrop of the chart's background, so a level line or a marker under
+   it does not run through its text. */
+.fac-legend .lv { display: flex; flex-wrap: nowrap; gap: 0 12px; white-space: nowrap; }
+.fac-legend .lv > * { flex: none; }
+.fac-legend .lv > [hidden] { display: none; }
+.fac-legend .fac-lg-top, .fac-legend .lv, .fac-legend > .sub:not(.fac-lg-foldrow) { width: fit-content; max-width: 100%; box-sizing: border-box;
+  padding: 0 4px; margin-left: -4px; border-radius: 3px;
+  /* the theme's shade twice (0.6 → 0.84 opaque): a line under the text stays faint */
+  background: linear-gradient(var(--fac-shade, rgba(15,17,21,0.6)), var(--fac-shade, rgba(15,17,21,0.6))), var(--fac-shade, rgba(15,17,21,0.6)); }
+.fac-legend .fac-lg-top { display: block; }
+.fac-lg-more { pointer-events: auto; cursor: help; color: var(--fac-muted, #8a909c); }
+/* The fold button under the price pane's indicator lines, like TradingView's: folded, it points down with their count. */
+.fac-lg-foldrow { margin-top: 2px; }
+.fac-lg-btn.fac-lg-fold { width: auto; min-width: 22px; height: 18px; padding: 0 4px; gap: 2px; border: 1px solid var(--fac-line, #262a33);
+  background: var(--fac-bg, #0f1115); font: inherit; font-size: 11px; }
+.fac-lg-fold svg { width: 14px; height: 14px; }
+.fac-lg-fold.on svg { transform: rotate(180deg); }
 .fac-legend .lv .k { margin-left: 0; }
 .fac-legend .ch { color: var(--fac-muted, #8a909c); }
 .fac-fx { font-style: italic; font-weight: 700; font-family: Georgia, serif; margin-right: 2px; }
@@ -138,6 +162,8 @@
 .fac-ind-head .fac-icon { width: 26px; height: 24px; flex: none; }
 .fac-ind-head .fac-icon svg, .fac-lg-btn svg { width: 15px; height: 15px; }
 .fac-ind-layers { padding-left: 22px; }
+/* An indicator with one layer: one row, like TradingView (its switch, its name, its options). */
+.fac-ind-one .fac-ind-row b { overflow: hidden; text-overflow: ellipsis; }
 .fac-ind-row { display: flex; align-items: center; gap: 2px; }
 .fac-ind-row > :first-child { flex: 1; min-width: 0; }
 .fac-ind-row .fac-icon { width: 26px; height: 24px; flex: none; color: var(--fac-muted, #8a909c); }
@@ -166,8 +192,16 @@
 /* Each plugin pane's legend, at its top left (top set from the pane heights). */
 .fac-pane-lgs { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
 .fac-legend.fac-pane-lg { top: 0; }
-@media (hover: none) { .fac-lg-btns { position: static; transform: none; visibility: visible; } }
+/* Touch screens: no hover, so no hide / options / remove buttons in the legends (they would sit over the values; the
+   Indicators menu does the same); a plugin's panel title keeps its buttons, shown in place. */
+@media (hover: none) {
+  .fac-lg-btns { position: static; transform: none; visibility: visible; }
+  .fac-legend .fac-lg-btns { display: none; }
+}
 .fac-lg-note { pointer-events: auto; cursor: help; text-decoration: underline dotted; text-underline-offset: 2px; }
+/* Indicators the key's plan does not include: their names and the link to upgrade (or to sign up). */
+.fac-lg-up { pointer-events: auto; color: var(--fac-accent, #4f8cff); font-weight: 600; text-decoration: none; }
+.fac-lg-up:hover { text-decoration: underline; }
 /* An ⓘ in a legend line: its text shows under it on hover, and stays open after a click until a click elsewhere. */
 .fac-lg-info { pointer-events: auto; position: relative; display: inline-flex; align-items: center; justify-content: center;
   width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--fac-muted, #8a909c); cursor: help; }

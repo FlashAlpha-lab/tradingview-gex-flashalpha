@@ -298,6 +298,11 @@ export interface PluginUtil {
     num(value: number | null | undefined, digits?: number): string;
     /** 1.5B, 2.3M, 1.5K. */
     big(value: number | null | undefined): string;
+    /**
+     * The points with each whitespace point kept a gap: Lightweight Charts 5 joins the points either side of it, so the
+     * point before the gap is made transparent (line and fill). `type`: the series type (default `'line'`).
+     */
+    cutGaps<T extends { time: number; value?: number }>(points: T[], type?: 'line' | 'area' | 'baseline'): T[];
     RES_SECONDS: Record<Resolution, number>;
 }
 
@@ -310,8 +315,11 @@ export interface PluginContext {
     options: MountOptions;
     colors: Record<'up' | 'down' | 'spotUp' | 'spotDown' | 'flip' | 'unverified' | 'maxpain', string>;
     /** A level line: steps through the day and a dotted line at its latest value. */
-    /** With `plotId`, the line follows that plot's style (see `bindPlot`). */
-    level(color: string, title: string, plotId?: string): ISeriesApi<'Line'>;
+    /**
+     * With `plotId`, the line follows that plot's style (see `bindPlot`). `short`: its title on the price scale where the
+     * full one does not fit (phones, a plugin drawing at the pane's right edge), e.g. `'CW'`; without it, no title there.
+     */
+    level(color: string, title: string, plotId?: string, short?: string): ISeriesApi<'Line'>;
     /** Ties a series to one of the plugin's plots (`plots`): its layer's options restyle it. Returns the series. */
     bindPlot<S extends ISeriesApi<any>>(plotId: string, series: S): S;
     /** A plot's current style. */
@@ -321,6 +329,8 @@ export interface PluginContext {
     on(layer: string): boolean;
     /** True when the layer is on but hidden with the legend's 👁: not drawn (e.g. keep its pane, empty). */
     hidden(layer: string): boolean;
+    /** True when the last answer gave API layer `apiLayer` as status "gated" (the key's plan does not include it). */
+    gated(apiLayer: string): boolean;
     /** True when the key's plan is below `plan`. */
     lockedPlan(plan: Plan | string): boolean;
     /** The upgrade link, tagged with utm parameters. */
@@ -363,17 +373,22 @@ export interface PluginHandle {
     draw?(response: ChartsResponse): void;
     /** When a load failed. */
     clear?(): void;
-    /** Lines for the legend at `time`. */
-    legend?(time: number, y: number | null): string[] | string | null | undefined;
+    /**
+     * Lines for the legend at `time`. `{ gated: name }` names an indicator whose data the key's plan does not include: the
+     * legend puts every such name on one "Not in your plan" line with the Upgrade (or Sign up) link.
+     */
+    legend?(time: number, y: number | null): Array<string | { gated: string } | null> | string | { gated: string } | null | undefined;
     crosshair?(time: number | null, y: number | null): void;
     destroy?(): void;
     /**
      * Parts of an indicator's line in the legend (after spot on the core one); insert or append in place. `{ label, value, prev, cls }`
      * reads like a key level (change against `prev`); `{ text, title }` is a note with a tooltip; a string is text. `prev`:
      * the previous session's last row, or null.
-     * Called once per indicator of the plugin that is on; `indicator` is its name.
+     * Called once per indicator of the plugin that is on, at every bar; `indicator` is its name. At a bar without an
+     * exposure row `row` is `{ time }` and `prev` null. `at`: the bar and the crosshair's y in the price pane (null off the
+     * chart), for a part that follows the pointer. The line is one line: its parts never wrap.
      */
-    legendLevels?(row: ChartExposureRow, parts: Array<LegendLevel | LegendNote | LegendRamp | LegendInfo | string>, prev: ChartExposureRow | null, indicator: string): void;
+    legendLevels?(row: ChartExposureRow | { time: number }, parts: Array<LegendLevel | LegendNote | LegendRamp | LegendInfo | string>, prev: ChartExposureRow | null, indicator: string, at: { time: number | null; y: number | null }): void;
     /** The series of a pane of its own the indicator draws in: its legend line goes to the top left of that pane. */
     paneOf?(indicator: string): ISeriesApi<any> | null;
     /** Lines for panes that are no indicator of their own, at the top left of each `series`'s pane. */
@@ -389,14 +404,14 @@ export interface PluginHandle {
 export interface LayerPlugin {
     /** The indicator (Indicators menu group) the layers belong to; plugins with the same name share one. Default: `name`, else the first layer's label. */
     indicator?: string;
-    /** An indicator per layer id, over `indicator`: one plugin can fill several indicators, e.g. `{ heatmap: 'GEX by strike' }`. */
+    /** An indicator per layer id, over `indicator`: one plugin can fill several indicators, e.g. `{ heatmap: 'Strike heatmap' }`. */
     indicators?: Record<string, string>;
     name?: string;
     /** Lines the plugin draws, listed in the indicator's Style tab; tie each series with `ctx.bindPlot`. */
     plots?: PlotDef[];
     /** `[id, menu label]` pairs. */
     layers: Array<[string, string]>;
-    /** Layer ids turned on when `options.layers` is not given. */
+    /** @deprecated Not used: an indicator's switch turns all its layers on, or all off. */
     defaults?: string[];
     /** The lowest plan per layer id; a layer without one is never locked. */
     plans?: Record<string, Plan>;

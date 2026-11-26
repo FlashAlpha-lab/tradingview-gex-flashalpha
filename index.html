@@ -8,7 +8,7 @@
 <link rel="canonical" href="https://flashalpha-lab.github.io/tradingview-gex-flashalpha/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="TradingView GEX by FlashAlpha: live gamma exposure chart">
-<meta property="og:description" content="Call wall, put wall, gamma flip, max pain, net GEX and GEX by strike on a live candlestick chart, from the FlashAlpha options API.">
+<meta property="og:description" content="Call wall, put wall, gamma flip, max pain, net GEX, GEX by strike and by expiry, the expected move and the 0DTE hedging flow on a live candlestick chart, from the FlashAlpha options API.">
 <meta property="og:url" content="https://flashalpha-lab.github.io/tradingview-gex-flashalpha/">
 <meta property="og:image" content="https://raw.githubusercontent.com/FlashAlpha-lab/tradingview-gex-flashalpha/main/assets/gex-levels-walls-gamma-flip.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -160,8 +160,11 @@
       <span class="plan">Basic plan.</span></li>
     <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/net-gex.md">Net GEX</a>:
       net dealer gamma exposure in dollars, in a pane under the price. <span class="plan">Basic plan.</span></li>
-    <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-by-strike.md">GEX by strike</a>:
-      a strike heatmap behind the candles and a GEX profile at the right edge, with GEX, DEX, VEX and CHEX lenses.
+    <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-by-strike.md">Strike heatmap and GEX profile</a>:
+      net GEX per strike behind the candles and as bars at the right edge, each with GEX, DEX, VEX and CHEX lenses.
+      <span class="plan">Growth plan.</span></li>
+    <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/expiry-heatmap.md">Expiry heatmap</a>:
+      gamma by strike and by expiration in a panel beside the chart, with totals per strike and per expiration.
       <span class="plan">Growth plan.</span></li>
     <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/metrics-pane.md">Greeks and 0DTE metrics</a>:
       delta, vanna or charm exposure, or a 0DTE metric such as the pin score, IV ratio, VIX or dealer hedge per ±1 %.
@@ -169,6 +172,15 @@
     <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/0dte-and-live-oi.md">0DTE scope and live open interest</a>:
       the same indicators on today's expiry only, or on open interest updated with today's flow.
       <span class="plan">Growth (0DTE), Alpha (live OI).</span></li>
+    <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/expected-move.md">Expected move</a>:
+      the options-implied 1σ range of each session from its open, and how often the price stayed inside it.
+      <span class="plan">Growth plan.</span></li>
+    <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/level-events.md">Level events</a>:
+      where the price was rejected at a GEX level, broke it or crossed the gamma flip; regime flips, OPEX and earnings days.
+      <span class="plan">Growth plan.</span></li>
+    <li><a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/0dte-hedging-flow.md">0DTE hedging flow</a>:
+      the stock dealers had to buy or sell to hedge today's 0DTE trades, with divergences against the price.
+      <span class="plan">Growth plan.</span></li>
   </ul>
 
   <h3>Add the chart to your site</h3>

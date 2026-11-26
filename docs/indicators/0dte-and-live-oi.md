@@ -48,5 +48,5 @@ Open the **Indicators** menu, press the options button (⚙) of **GEX Levels**, 
 
 ---
 
-Related: [GEX Levels](gex-levels.md) · [GEX by strike](gex-by-strike.md) · [Greeks and 0DTE metrics](metrics-pane.md) ·
+Related: [GEX Levels](gex-levels.md) · [Strike heatmap and GEX profile](gex-by-strike.md) · [Greeks and 0DTE metrics](metrics-pane.md) ·
 [Compare FlashAlpha plans](https://flashalpha.com/pricing?utm_source=github&utm_medium=docs&utm_campaign=tradingview-gex-flashalpha)

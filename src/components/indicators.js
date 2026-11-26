@@ -11,7 +11,8 @@ const STYLES = [['solid', 'Solid'], ['dotted', 'Dotted'], ['dashed', 'Dashed']];
  * The Indicators menu and the layer options dialog, like TradingView's.
  * An indicator is a named group of layers (view.groups, see buildIndicators in chart.js: e.g. the core
  * "GEX Levels": Walls & gamma flip, Max pain, plus layers plugins add to it). The menu lists each indicator
- * with a switch (all its layers on / off) and its layers; a layer above the key's plan is a 🔒 link to the upgrade page
+ * with a switch (all its layers on / off; half-ticked while only some are on) and its layers; an indicator with one layer is one row, like TradingView (the
+ * layer's switch, under the indicator's name, and its options); a layer above the key's plan is a 🔒 link to the upgrade page
  * with the plan it needs on the right (the layers open to the key's plan carry no plan label). An indicator groups layers that can need
  * different plans, so its name carries none: the layers above the reader's plan are what the upgrade sells.
  * The indicator has no options of its own: each open layer has an options button (gear) that opens its dialog.
@@ -35,10 +36,10 @@ export function createIndicators(view) {
    * (above the key's plan; the pricing page, in a new tab). The indicator's name carries no plan: its layers can need
    * different plans.
    */
-  function layerRow(k, label) {
-    const plan = view.layerPlan[k] || 'free';
-    if (view.locked(k)) return `<a class="fac-lock" href="${esc(view.upgradeHref(k))}" target="_blank" rel="noopener">🔒 ${esc(label)} <span class="plan">${esc(planName(plan))}</span></a>`;
-    return `<label><input type="checkbox" data-layer="${esc(k)}" ${view.active(k) ? 'checked' : ''}> ${esc(label)}</label>`;
+  function layerRow(k, label, bold = false) {
+    const plan = view.layerPlan[k] || 'free', name = bold ? `<b>${esc(label)}</b>` : esc(label);
+    if (view.locked(k)) return `<a class="fac-lock" href="${esc(view.upgradeHref(k))}" target="_blank" rel="noopener">🔒 ${name} <span class="plan">${esc(planName(plan))}</span></a>`;
+    return `<label><input type="checkbox" data-layer="${esc(k)}" ${view.active(k) ? 'checked' : ''}> ${name}</label>`;
   }
   /**
    * The indicator's switch. An indicator with every layer above the key's plan opens the upgrade page (pricing, new tab)
@@ -63,14 +64,26 @@ export function createIndicators(view) {
   function renderList() {
     if (!list) return;
     // A layer row: its switch (or 🔒 link), then its options button while it is open to the key's plan.
-    const row = (g, k, l) => `<div class="fac-ind-row">${layerRow(k, l)}${view.locked(k) ? ''
+    const row = (g, k, l, bold) => `<div class="fac-ind-row">${layerRow(k, l, bold)}${view.locked(k) ? ''
       : `<button type="button" class="fac-icon" data-settings="${esc(k)}" title="Options" aria-label="${esc(l)} options">${ICONS.settings}</button>`}</div>`;
-    list.innerHTML = view.groups.map(g => `<div class="fac-ind" data-ind="${esc(g.id)}">
-      <div class="fac-ind-head"><label><input type="checkbox" data-group ${view.groupOn(g) ? 'checked' : ''}> <b>${esc(g.name)}</b></label></div>
+    // An indicator with one layer is one row, like TradingView: its switch is the layer's, named after the indicator. One
+    // with several has its name and switch, then a row per layer.
+    list.innerHTML = view.groups.map(g => g.layers.length === 1
+      ? `<div class="fac-ind fac-ind-one" data-ind="${esc(g.id)}">${row(g, g.layers[0][0], g.name, true)}</div>`
+      : `<div class="fac-ind" data-ind="${esc(g.id)}">
+      <div class="fac-ind-head"><label><input type="checkbox" data-group> <b>${esc(g.name)}</b></label></div>
       <div class="fac-ind-layers">${g.layers.map(([k, l]) => row(g, k, l)).join('')}</div></div>`).join('');
     list.querySelectorAll('.fac-ind').forEach(box => {
       const g = view.groups.find(x => x.id === box.dataset.ind);
-      box.querySelector('[data-group]').onchange = e => toggleGroup(g, e.target.checked, e.target);
+      const sw = box.querySelector('[data-group]');
+      if (sw) {
+        // Ticked when all its open layers are on, half-ticked when only some are; a click turns them all on (unticked or
+        // half-ticked) or all off (ticked).
+        const open = g.layers.filter(([k]) => !view.locked(k)), on = open.filter(([k]) => view.active(k)).length;
+        sw.checked = open.length > 0 && on === open.length;
+        sw.indeterminate = on > 0 && on < open.length;
+        sw.onchange = e => toggleGroup(g, e.target.checked, e.target);
+      }
       box.querySelectorAll('[data-settings]').forEach(b => { b.onclick = () => { view.closeMenus(); openSettings(g.id, b.dataset.settings); }; });
       box.querySelectorAll('input[data-layer]').forEach(i => { i.onchange = () => view.api.setLayers(layersFrom(box, g)); });
     });
