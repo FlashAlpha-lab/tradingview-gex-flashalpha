@@ -1,9 +1,13 @@
 import { LINE_STYLES, THEMES } from '../constants.js';
-import { fmtClock } from '../time.js';
+import { etTime, fmtClock, fmtDay, sessionOf } from '../time.js';
 import { LevelsOverlay, levelRuns, pct, regimeRuns } from './levels-overlay.js';
 
 /** The indicator (Indicators menu group) the core layers belong to; layer plugins join it with the same `indicator` name. */
 export const CORE_INDICATOR = 'GEX Levels';
+
+/** Levels this many minutes older than the newest regular-hours bar read "delayed" in the legend. */
+export const STALE_MINUTES = 10;
+const STALE_COLOR = '#f59e0b';
 
 /** Daily levels are computed on all expiries and settled open interest only: not drawn under a 0DTE or live-flow query. */
 const dailyQuery = q => (q.scope || 'all') === 'all' && (q.basis || 'settled') === 'settled';
@@ -117,6 +121,28 @@ export const levelsPlugin = {
     }
     /** A new session starts between points a and b: a level line never runs on across it. */
     const newSession = (a, b) => dayOf(a.time) !== dayOf(b.time);
+
+    /**
+     * When the newest exposure row's levels were computed (its `as_of`, else its bucket's time), and whether they are late:
+     * while a session is trading (the newest regular-hours bar is still open, or closed under STALE_MINUTES ago), when that
+     * bar is more than STALE_MINUTES after them or they are from an earlier session. A past session is not checked (history
+     * rows come every 15 to 60 minutes). null off intraday or without rows.
+     * { row, at, clock: "10:32 ET", late: '' | 'delayed 14 min' | 'from the previous session', bar: the newest RTH bar }
+     */
+    function freshness() {
+      const rows = ctx.exposure, row = rows[rows.length - 1];
+      if (!ctx.intraday() || !row) return null;
+      const at = row.as_of ? etTime(row.as_of) : row.time;
+      let bar = null;
+      for (let i = ctx.bars.length - 1; i >= 0 && !bar; i--) if (sessionOf(ctx.bars[i].time) === 'rth') bar = ctx.bars[i];
+      const step = { '1m': 60, '5m': 300, '15m': 900, '1h': 3600 }[ctx.resolution] || 60;
+      const trading = !!bar && etTime(new Date().toISOString()) - (bar.time + step) < STALE_MINUTES * 60;
+      const lag = trading ? Math.round((bar.time - at) / 60) : 0;
+      const late = !trading ? '' : dayOf(bar.time) !== dayOf(at) ? 'from the previous session' : lag > STALE_MINUTES ? `delayed ${lag} min` : '';
+      const clock = `${dayOf(at) === dayOf(bar ? bar.time : at) ? '' : fmtDay.format(new Date(at * 1000)) + ' '}${fmtClock.format(new Date(at * 1000))} ET`;
+      return { row, at, clock, late, bar };
+    }
+    const levelsOn = () => ['levels', 'maxpain'].some(ctx.on);
 
     /**
      * The overlay segments of a FLAT line (hidden plot: none): one per run of the same value, in the plot's colour (or
@@ -331,6 +357,16 @@ export const levelsPlugin = {
         const dm = g.max_pain == null && g.time < dailyCut.maxPain ? dailyByTime.get(g.time) : null;
         if (ctx.on('maxpain') && dm && dm.max_pain != null) parts.push({ label: 'Max pain (daily)', value: dm.max_pain, plot: 'maxPain' });
         else if (ctx.on('maxpain')) parts.push({ label: 'Max pain', value: g.max_pain, prev: prev && prev.max_pain, plot: 'maxPain' });
+        // The newest row: "As of 10:32 ET"; late, in amber with why, first on the line so a narrow legend does not cut it.
+        const fresh = levelsOn() ? freshness() : null;
+        if (fresh && fresh.row === g && fresh.late) parts.unshift({ label: 'As of', value: fresh.clock, color: STALE_COLOR, note: fresh.late });
+        else if (fresh && fresh.row === g) parts.push({ label: 'As of', value: fresh.clock });
+      },
+      // The levels stopped before the newest bar (no exposure row there, so no levels line values): a line says so.
+      legend(time) {
+        const f = levelsOn() ? freshness() : null;
+        if (!f || !f.late || !f.bar || time !== f.bar.time || f.row.time === f.bar.time) return [];
+        return [`⚠ GEX levels ${f.late}: last update ${f.clock}`];
       },
     };
   },

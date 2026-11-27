@@ -53,6 +53,11 @@ describe('plans', () => {
     assert.equal(u.searchParams.get('utm_content'), 'heatmap');
     assert.equal(u.searchParams.get('utm_term'), 'example.com');
   });
+  it('does not tag a link to the page\'s own site (www. or not)', () => {
+    assert.equal(upgradeHref('/pricing?returnUrl=%2Fx', 'heatmap'), 'https://example.com/pricing?returnUrl=%2Fx');
+    assert.equal(upgradeHref('https://www.example.com/pricing', 'heatmap', 'signup'), 'https://www.example.com/pricing');
+    assert.match(upgradeHref('https://charts.example.com/pricing', 'heatmap'), /utm_source=chart/, 'another host is tagged');
+  });
 });
 
 describe('chartEngineSource', () => {

@@ -1,5 +1,4 @@
 import { PLAN_NAMES } from '../constants.js';
-import { global } from '../env.js';
 import { planRank } from '../plans.js';
 import { esc } from '../util.js';
 import { ICONS } from './layout.js';
@@ -38,7 +37,7 @@ export function createIndicators(view) {
    */
   function layerRow(k, label, bold = false) {
     const plan = view.layerPlan[k] || 'free', name = bold ? `<b>${esc(label)}</b>` : esc(label);
-    if (view.locked(k)) return `<a class="fac-lock" href="${esc(view.upgradeHref(k))}" target="_blank" rel="noopener">🔒 ${name} <span class="plan">${esc(planName(plan))}</span></a>`;
+    if (view.locked(k)) return `<a class="fac-lock" href="${esc(view.upgradeHref(k))}" ${view.ctaAttrs(k)} target="_blank" rel="noopener">🔒 ${name} <span class="plan">${esc(planName(plan))}</span></a>`;
     return `<label><input type="checkbox" data-layer="${esc(k)}" ${view.active(k) ? 'checked' : ''}> ${name}</label>`;
   }
   /**
@@ -49,7 +48,7 @@ export function createIndicators(view) {
     if (wanted && g.layers.length && g.layers.every(([k]) => view.locked(k))) {
       input.checked = false;
       const [k] = g.layers.slice().sort(([a], [b]) => planRank(view.layerPlan[a]) - planRank(view.layerPlan[b]))[0];
-      global.open(view.upgradeHref(k), '_blank', 'noopener');
+      view.openUpgrade(k);
       return;
     }
     return view.setGroup(g, wanted);

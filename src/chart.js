@@ -149,10 +149,30 @@ export function mountChart(container, options, hooks = {}) {
   const $ = sel => root.querySelector(sel)
     || outside.map(el => el.matches(sel) ? el : el.querySelector(sel)).find(Boolean) || null;
   const status = text => { const s = $('.fac-status'); if (s) s.textContent = o.debug ? text : ''; };
+  /**
+   * Tells the page the reader followed a Sign up or Upgrade link or prompt: a `flashalpha:upgrade` event on the container
+   * (it bubbles); `detail` is { campaign: 'upgrade' | 'signup', content, href, symbol }.
+   */
+  const upgradeEvent = (campaign, content, href) => container.dispatchEvent(new CustomEvent('flashalpha:upgrade', { bubbles: true,
+    detail: { campaign, content: content || null, href, symbol: state.symbol } }));
+  /** A click on a Sign up / Upgrade link (marked data-fac-cta, with data-fac-content); heard while capturing: the menus stop their clicks. */
+  const ctaClick = e => {
+    const a = e.target && e.target.closest ? e.target.closest('a[data-fac-cta]') : null;
+    if (a) upgradeEvent(a.getAttribute('data-fac-cta'), a.getAttribute('data-fac-content'), a.href);
+  };
+  root.addEventListener('click', ctaClick, true);
   /** What the components share. */
   const view = { container, root, $, o, state, data, layerList, layerPlan, locked, on, active, intraday,
     frame: () => (hooks.frame && hooks.frame()) || root,
     upgradeHref: what => upgradeHref(o.upgradeUrl, what), signupHref: (what = 'toolbar') => upgradeHref(o.signupUrl, what, 'signup'),
+    /** The data-fac-cta / data-fac-content attributes of a Sign up ('signup') or Upgrade link, for ctaClick. */
+    ctaAttrs: (what, campaign = 'upgrade') => `data-fac-cta="${esc(campaign)}" data-fac-content="${esc(what || '')}"`,
+    /** Opens the upgrade page in a new tab (a prompt that is not a link) and tells the page. */
+    openUpgrade(what) {
+      const href = view.upgradeHref(what);
+      upgradeEvent('upgrade', what, href);
+      global.open(href, '_blank', 'noopener');
+    },
     call, api: null, applySetting: null, screenshot: null, closeMenus: () => {},
     groups, styles, defaultStyle, corePlugin: levelsPlugin,
     /** An indicator is on when one of its layers is on (drawn, or hidden with the legend's 👁). */
@@ -242,7 +262,7 @@ export function mountChart(container, options, hooks = {}) {
 
   let candles = null, started = false, destroyed = false;
   const ctx = {
-    LW, chart, root, options: o, colors: COLORS, level, intraday, on, lockedPlan, upgradeHref: view.upgradeHref,
+    LW, chart, root, options: o, colors: COLORS, level, intraday, on, lockedPlan, upgradeHref: view.upgradeHref, openUpgrade: view.openUpgrade,
     /** True for a layer that is on but hidden with the legend's 👁 (on() is false for it): e.g. keep its pane, empty. */
     hidden: hiddenLayer,
     /** True when the last load's answer gave API layer `apiLayer` as status "gated" (the key's plan does not include it). */
@@ -883,13 +903,20 @@ export function mountChart(container, options, hooks = {}) {
     if (lr.to > data.bars.length - 1 - EDGE / 2 && stale && Date.now() - lazy.newerAt > 60e3) loadNewer();
   });
 
-  /** Tells the group (hooks.changed) after the interval, range, session or layers changed. */
-  const changed = p => { if (hooks.changed) hooks.changed(api); return p; };
+  /**
+   * Tells the page: a `flashalpha:change` event on the container (it bubbles) after the symbol, interval, range, session or
+   * layers changed, by the reader or by a method; `detail` is { symbol, resolution, range, session, layers }.
+   */
+  const announce = () => container.dispatchEvent(new CustomEvent('flashalpha:change', { bubbles: true,
+    detail: { symbol: state.symbol, resolution: state.res, range: state.days, session: o.session, layers: [...state.layers] } }));
+  /** Tells the group (hooks.changed) and the page after the interval, range, session or layers changed. */
+  const changed = p => { if (hooks.changed) hooks.changed(api); announce(); return p; };
   const api = {
     setSymbol(x) {
       state.symbol = x; toolbar.render();
       const p = load();
       if (hooks.symbol) hooks.symbol(x, api);
+      announce();
       return p;
     },
     setResolution(r) { state.res = r; state.days = DEFAULT_DAYS[r] || state.days; toolbar.render(); return changed(load()); },
@@ -925,7 +952,12 @@ export function mountChart(container, options, hooks = {}) {
     get session() { return o.session; },
     /** For a chart group: the toolbar, time bar and credit line, and where they are now (see `outside`). */
     _parts: () => ({ bar: root.querySelector('.fac-bar'), time: root.querySelector('.fac-timebar'), credit: root.querySelector('.fac-credit') }),
-    _outside(list) { outside = list.filter(Boolean); },
+    _outside(list) {
+      // the parts out of the chart's element still tell the page about a Sign up / Upgrade click
+      outside.forEach(el => el.removeEventListener('click', ctaClick, true));
+      outside = list.filter(Boolean);
+      outside.forEach(el => el.addEventListener('click', ctaClick, true));
+    },
     _closeMenus: () => view.closeMenus(),
     /** The key's plan from the last answer ('free', 'basic', ...), or null before it / without auth. */
     get plan() { return state.plan; },

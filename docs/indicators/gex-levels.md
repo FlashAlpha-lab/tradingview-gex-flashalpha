@@ -28,6 +28,10 @@ A gamma flip that the data source has not yet certified is drawn lighter, so you
 - **Levels per bar.** Each level is a flat line segment per value, drawn on the same time axis as the candles. When a wall
   moves, you see the exact bar where it moved.
 - **Gamma regime tint.** The background is green above the gamma flip and red below it, session by session.
+- **How fresh the levels are.** The legend ends with the time the newest levels were computed, for example
+  `As of 11:59 ET`. During a session, levels more than 10 minutes behind the newest candle (or from the previous
+  session) turn amber and move to the front of the line, `As of 11:40 ET (delayed 15 min)`; when they stopped before the
+  newest candle, a line under the legend says so: `⚠ GEX levels delayed 25 min: last update 11:30 ET`.
 - **Legend with distances.** The legend lists spot, the walls, the flip, max pain and the regime for the bar under your
   cursor, with each wall's and the flip's distance from spot and change since the previous session, for example
   `Call wall 730.00 (+1.0%) (−45.00)` and `Regime −γ (dealers amplify moves)`.

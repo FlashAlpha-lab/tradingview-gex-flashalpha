@@ -270,11 +270,13 @@ export function createToolbar(view) {
       account.textContent = PLAN_NAMES[plan] || state.plan;
       account.title = `Your plan: ${PLAN_NAMES[plan] || state.plan}`;
       account.href = view.upgradeHref('account');
+      account.setAttribute('data-fac-cta', 'upgrade'); account.setAttribute('data-fac-content', 'account');
     } else {
       account.className = 'fac-account fac-signup';
       account.textContent = 'Sign up';
       account.title = 'Create a free FlashAlpha account';
       account.href = view.signupHref();
+      account.setAttribute('data-fac-cta', 'signup'); account.setAttribute('data-fac-content', 'toolbar');
     }
     account.hidden = false;
   }

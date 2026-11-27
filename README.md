@@ -152,6 +152,8 @@ The core indicator. It draws the levels options traders watch most, bar by bar t
   `Regime −γ (dealers amplify moves)`.
 - **Never lose an off-screen level.** A level outside the visible range is pinned to the chart edge with its distance,
   for example `▲ Call wall 8,000.00 (+11.5%)`.
+- **Know how fresh the levels are.** The legend ends with `As of 11:59 ET`; during a session, levels more than 10 minutes
+  behind the candles turn amber: `As of 11:40 ET (delayed 15 min)`.
 - **Broken-wall alerts (optional).** When a candle closes through a wall, the wall fades for the rest of the session and
   a marker such as `Put wall broken 10:30` appears on the bar.
 - **Previous-session levels.** On daily and weekly bars, each session shows the prior close's levels as dashed lines.
@@ -727,6 +729,31 @@ The event bubbles, and `event.detail` has `symbol` and `error`. For example, you
 
 ```js
 el.addEventListener('flashalpha:nodata', () => { el.closest('section').hidden = true; });
+```
+
+After the symbol, interval, range, session or layers changed (by the reader or by a method), the chart dispatches
+`flashalpha:change` on the container. It bubbles; `event.detail` is `{ symbol, resolution, range, session, layers }`
+(in a layout, each chart sends its own). For example, keep the chart in the page address so a link opens the same chart:
+
+```js
+el.addEventListener('flashalpha:change', e => {
+  const q = new URLSearchParams(location.search);
+  q.set('symbol', e.detail.symbol); q.set('res', e.detail.resolution); q.set('layers', e.detail.layers.join(','));
+  history.replaceState(null, '', '?' + q);
+});
+```
+
+When the reader follows a **Sign up** or **Upgrade** link or prompt, the chart dispatches `flashalpha:upgrade` on the
+container. It bubbles; `event.detail` is `{ campaign, content, href, symbol }`: `campaign` is `'signup'` or `'upgrade'`,
+`content` where it was (`toolbar`, `account`, `legend`, `gate`, `upsell`, or the locked layer such as `levels`).
+These links carry `utm_source=chart` tags so FlashAlpha can count where readers came from, except a link to the page's
+own site (`upgradeUrl` / `signupUrl` on the same host, `www.` or not), whose tags would replace the reader's own traffic
+source. On your own site, count the clicks with the event instead:
+
+```js
+el.addEventListener('flashalpha:upgrade', e => {
+  gtag('event', 'cta_click', { cta_name: `chart-${e.detail.campaign}-${e.detail.content}`, destination_url: e.detail.href });
+});
 ```
 
 ---

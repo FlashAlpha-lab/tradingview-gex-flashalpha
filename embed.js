@@ -39,7 +39,7 @@
   'use strict';
   if (window.FlashAlphaEmbed) { window.FlashAlphaEmbed.scan(); return; }
 
-  var VERSION = '1.1.0';
+  var VERSION = '1.2.0';
   // The tested lightweight-charts, from the chart host (no CDN), like the core. No SRI hash: an integrity check needs a
   // CORS (crossorigin) request, and the host's static files are served without Access-Control-Allow-Origin.
   var LW_VERSION = '5.3.0';

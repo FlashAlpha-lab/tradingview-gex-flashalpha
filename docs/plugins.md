@@ -105,6 +105,7 @@ Panes a plugin adds under the price pane each get a fifth of the chart's height 
 | `on(id)` | True when the layer is picked, the key's plan includes it and it is not hidden with the legend's 👁 (in `apiLayers` a hidden layer counts as on: its data keeps coming, so it shows again at once). |
 | `hidden(id)` | True when the layer is on but hidden with the legend's 👁: draw nothing for it (a pane of its own can stay, empty, for its legend line). |
 | `plan`, `lockedPlan(plan)`, `upgradeHref(what)` | The key's plan, whether a plan is above it, and the tagged upgrade link. |
+| `openUpgrade(what)` | Opens the upgrade page in a new tab for a prompt that is not a link (a locked option), and tells the page (`flashalpha:upgrade`). |
 | `gated(apiLayer)` | True when the last answer gave that API layer as status `"gated"` (the key's plan does not include it): return `{ gated: name }` from `legend()` instead of a "no data" reason. |
 | `addControl(el, where, indicator)` | Adds a control: into an indicator's options, shown in the options of each of its layers (the plugin's own indicator, or the one named by `indicator`), Inputs tab, under `el.title` (default), or `'toolbar'` (it moves into the Indicators menu on phones). False when the toolbar is hidden. |
 | `level(color, title, plotId, short)` | A level line; with `plotId` it follows that plot's style. `short`: its title on the price scale where the full one does not fit (phones, a plugin drawing at the pane's right edge), for example `CW`; without it the label has no title there. |

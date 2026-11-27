@@ -12,9 +12,18 @@ export function setLicenseKey(key) { licenseKey = key || null; }
 
 export const getLicenseKey = () => licenseKey;
 
-/** The upgrade (or sign-up: campaign 'signup') link, tagged so flashalpha.com can count where buyers came from. */
+/** A host without its leading "www.": flashalpha.com and www.flashalpha.com are one site. */
+const siteOf = host => String(host || '').toLowerCase().replace(/^www\./, '');
+
+/**
+ * The upgrade (or sign-up: campaign 'signup') link, tagged so flashalpha.com can count where buyers came from. A link to
+ * the page's own site is not tagged: there the tags would replace the reader's own traffic source (the page hears the
+ * click as `flashalpha:upgrade` instead).
+ */
 export function upgradeHref(upgradeUrl, what, campaign = 'upgrade') {
-  const u = new URL(upgradeUrl, global.location ? global.location.href : undefined);
+  const here = global.location;
+  const u = new URL(upgradeUrl, here ? here.href : undefined);
+  if (here && here.hostname && siteOf(u.hostname) === siteOf(here.hostname)) return u.toString();
   u.searchParams.set('utm_source', 'chart'); u.searchParams.set('utm_medium', 'embed'); u.searchParams.set('utm_campaign', campaign);
   if (what) u.searchParams.set('utm_content', what);
   if (global.location && global.location.hostname) u.searchParams.set('utm_term', global.location.hostname);

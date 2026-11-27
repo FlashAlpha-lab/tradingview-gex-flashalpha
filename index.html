@@ -36,7 +36,7 @@
       "@id": "https://flashalpha-lab.github.io/tradingview-gex-flashalpha/#code",
       "name": "tradingview-gex-flashalpha",
       "description": "Open-source JavaScript chart that draws options gamma exposure (GEX) levels on TradingView Lightweight Charts: call wall, put wall, gamma flip, max pain, 0DTE magnet, net GEX, strike heatmap, GEX profile, expiry heatmap, expected move, level events and 0DTE hedging flow.",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "codeRepository": "https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha",
       "programmingLanguage": ["JavaScript", "TypeScript"],
       "runtimePlatform": "Web browser",
@@ -277,20 +277,47 @@
     ? window.FlashAlphaEmbed.scan().then(function () { if (!window.FlashAlphaChart) throw new Error('chart not loaded'); })
     : Promise.reject(new Error('embed.js not loaded'));
 
+  // The chart's symbol, interval and indicators are in the address (?symbol=SPY&res=5m&layers=levels,netgex), so a link
+  // opens the same chart. A link's settings are not remembered over the reader's own (storage off while they are given).
+  var RESOLUTIONS = ['1m', '5m', '15m', '1h', '1d', '1w'];
+  function fromUrl() {
+    var q = new URLSearchParams(location.search), out = {};
+    var s = (q.get('symbol') || '').trim().toUpperCase();
+    if (/^[A-Z0-9.^-]{1,12}$/.test(s)) out.symbol = s;
+    if (RESOLUTIONS.indexOf(q.get('res')) >= 0) out.resolution = q.get('res');
+    if (q.has('layers')) out.layers = q.get('layers').split(',').filter(function (x) { return /^[a-z0-9_]{1,40}$/.test(x); });
+    return out;
+  }
+  function toUrl() {
+    if (!chart || !chart.symbol) return;
+    var q = new URLSearchParams(location.search);
+    q.set('symbol', chart.symbol);
+    q.set('res', chart.resolution);
+    q.set('layers', chart.layers.join(','));
+    try { history.replaceState(null, '', location.pathname + '?' + q.toString().replace(/%2C/g, ',') + location.hash); } catch (e) { /* not kept */ }
+  }
+  chartEl.addEventListener('flashalpha:change', toUrl);
+
+  // Without a key the chart opens too (candles and volume, the GEX indicators locked with a "Sign up free" box); a key
+  // from Connect opens the indicators of its plan.
   function connect(key) {
     button.disabled = true;
     message('Loading the chart…');
     ready.then(function () {
       if (chart) { chart.destroy(); chart = null; }
       chartEl.innerHTML = '';
+      var link = fromUrl(), given = Object.keys(link).length > 0;
       chart = window.FlashAlphaChart.mount(chartEl, {
-        apiKey: key,
+        apiKey: key || null,
         baseUrl: CHART_API,
-        symbol: 'SPY',
-        resolution: '5m',
+        symbol: link.symbol || 'SPY',
+        resolution: link.resolution || '5m',
         theme: 'dark',
-        layers: ['levels', 'maxpain', 'netgex'],
+        layers: link.layers || ['levels', 'maxpain', 'netgex'],
+        storage: !given,
         storageKey: 'tradingview-gex-flashalpha:layers',
+        live: true,
+        upsell: !key,
         upgradeUrl: PRICING,
         signupUrl: PRICING,
         brand: { logo: CHART_API + '/flashalpha-logo.png', href: 'https://flashalpha.com/?utm_source=github&utm_medium=chart_page&utm_campaign=tradingview-gex-flashalpha', name: 'FlashAlpha' }
@@ -309,7 +336,8 @@
   });
 
   var saved = session.get();
-  if (saved) { input.value = saved; connect(saved); }
+  input.value = saved;
+  connect(saved);
 })();
 </script>
 </body>

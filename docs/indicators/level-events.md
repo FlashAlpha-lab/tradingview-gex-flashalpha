@@ -11,7 +11,9 @@ interest changes. The legend counts how often each level held in the window on s
 
 ## What the events mean
 
-The events come from 1-minute bars, whatever interval the chart shows.
+The events come from 1-minute bars, whatever interval the chart shows. They are measured against the levels the chart
+draws: on settled open interest, each session's levels from the open; on live open interest, a level counts as moved
+once the new strike has held for 5 minutes.
 
 | Marker | Event | What happened |
 |---|---|---|

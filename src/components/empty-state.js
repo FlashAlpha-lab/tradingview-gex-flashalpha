@@ -36,7 +36,7 @@ export function createEmptyState(view) {
     if (!error) { box.style.display = 'none'; return; }
     if (error === 'api_key_required') {
       box.innerHTML = `${PREVIEW}<div class="fac-gate-box">${ICONS.lock}<p class="fac-gate-ttl">${esc(GATE.title(state.symbol))}</p>`
-        + `<p class="fac-gate-txt">${esc(GATE.text)}</p><a class="fac-gate-cta" href="${esc(view.signupHref('gate'))}" target="_blank" `
+        + `<p class="fac-gate-txt">${esc(GATE.text)}</p><a class="fac-gate-cta" href="${esc(view.signupHref('gate'))}" ${view.ctaAttrs('gate', 'signup')} target="_blank" `
         + `rel="noopener">${ICONS.key}${esc(GATE.cta)}</a></div>`;
     } else {
       box.textContent = (error === 'unknown_symbol' || error === 'no bars') && state.symbol ? `No chart data for ${state.symbol} yet.`

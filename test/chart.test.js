@@ -1,5 +1,5 @@
 import { chartTime, fakeLW, fakeSource, host, hourlySource, observers, sessionData, tick } from './helpers.js';
-import { describe, it } from 'node:test';
+import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import FlashAlphaChart, { mount, registerLayers, setLicenseKey } from '../src/index.js';
 
@@ -485,7 +485,8 @@ describe('mount', () => {
     const legend = el.querySelector('.fac-legend .lv').textContent;
     // the price climbs one a bar: by the last bar it has closed above the day's call wall (breaks not shown by default);
     // each level with its distance from spot, then its change vs the previous session
-    assert.match(legend, /^GEX LevelsSpot [\d,.]+ \(\+[\d.]+\)Call wall [\d,.]+ \(−[\d.]+%\) \(\+1\.00\)Put wall [\d,.]+ \(−[\d.]+%\) \(−1\.00\)Gamma flip [\d,.]+ \(−[\d.]+%\) \(\+1\.00\)$/);
+    assert.match(legend, /^GEX LevelsSpot [\d,.]+ \(\+[\d.]+\)Call wall [\d,.]+ \(−[\d.]+%\) \(\+1\.00\)Put wall [\d,.]+ \(−[\d.]+%\) \(−1\.00\)Gamma flip [\d,.]+ \(−[\d.]+%\) \(\+1\.00\)As of ([A-Z][a-z]{2} \d{1,2} )?\d{1,2}:\d\d ET$/,
+      'with the day when the newest row is on another day than the newest regular-hours bar (a run between midnight and the open)');
     // the lines are cut between sessions: the first row of each new session is a gap, every other row has its value
     const call = c().series.find(s => s.opts.title === 'Call wall').data, day = t => new Date(t * 1000).toISOString().slice(0, 10);
     const firsts = call.filter((p, i) => i > 0 && day(p.time) !== day(call[i - 1].time));
@@ -641,7 +642,7 @@ describe('mount', () => {
     const { chart } = open(el, { layers: ['maxpain'] });
     await tick();
     const line = () => el.querySelector('.fac-legend .lv').textContent;
-    assert.match(line(), /^GEX LevelsSpot 5,076\.50Max pain 5,000\.00$/);
+    assert.match(line(), /^GEX LevelsSpot 5,076\.50Max pain 5,000\.00As of \d{1,2}:\d\d ET$/);
     await chart.setLayers(['levels', 'maxpain']);
     await tick();
     assert.match(line(), /Call wall 5,050\.00.*Put wall.*Gamma flip.*Max pain/);
@@ -740,6 +741,87 @@ describe('mount', () => {
     assert.equal(box.hidden, false);
     assert.match(box.textContent, /Basic.*Upgrade/);
     c2.destroy();
+  });
+
+  it('without a key the box over the chart says "Sign up free" and links to signupUrl', async () => {
+    const d = sessionData();
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async url => new Response(JSON.stringify(String(url).includes('/v1/charts/') ? { plan: 'free', layers: { exposure: { status: 'gated' } } }
+      : String(url).includes('/v1/bars/') ? { bars: d.bars } : [{ symbol: 'SPX', last_bar: '2026-11-13T20:45:00Z' }]),
+    { status: 200, headers: { 'Content-Type': 'application/json' } });
+    try {
+      const el = host();
+      const chart = mount(el, { symbol: 'SPX', refresh: 0, lightweightCharts: fakeLW(), storage: false, baseUrl: 'https://charts.test',
+        layers: ['levels'], upsell: true, signupUrl: 'https://flashalpha.test/join' });
+      await tick(50);
+      const box = el.querySelector('.fac-upsell');
+      assert.equal(box.hidden, false);
+      const a = box.querySelector('a');
+      assert.equal(a.textContent, 'Sign up free');
+      assert.match(a.href, /^https:\/\/flashalpha\.test\/join\?.*utm_content=upsell/, 'another site: tagged');
+      chart.destroy();
+    } finally { globalThis.fetch = realFetch; }
+  });
+
+  it('sends flashalpha:change on the container after the symbol, interval, range, session or layers changed', async () => {
+    const el = host(), seen = [];
+    el.addEventListener('flashalpha:change', e => seen.push(e.detail));
+    const { chart } = open(el, { layers: [] });
+    await tick();
+    assert.equal(seen.length, 0, 'not for the first load');
+    await chart.setResolution('15m');
+    await chart.setLayers(['levels']);
+    await chart.setSymbol('SPY');
+    await chart.setSession('eth');
+    await chart.setRange(2);
+    assert.deepEqual(seen.map(x => [x.symbol, x.resolution, x.session, x.layers.join(','), x.range]), [
+      ['SPX', '15m', 'rth', '', 5], ['SPX', '15m', 'rth', 'levels', 5], ['SPY', '15m', 'rth', 'levels', 5],
+      ['SPY', '15m', 'eth', 'levels', 5], ['SPY', '15m', 'eth', 'levels', 2]]);
+    chart.destroy();
+  });
+
+  describe('levels freshness', () => {
+    // 2026-11-13 (EST): 5m bars from the 9:30 open to `barsTo`, exposure rows to `rowsTo`, the last one computed at `asOf`.
+    function liveSource({ barsTo, rowsTo, asOf }) {
+      const bars = [], exposure = [];
+      for (let t = Date.parse('2026-11-13T14:30:00Z'), i = 0; t <= Date.parse(barsTo); t += 300e3, i++) {
+        const ts = new Date(t).toISOString();
+        bars.push({ ts, open: 5000 + i, high: 5001 + i, low: 4999 + i, close: 5000.5 + i, volume: 100 });
+        if (t <= Date.parse(rowsTo)) exposure.push({ ts, call_wall: 5050, put_wall: 4950, max_pain: 5000,
+          gamma_flip: { last: 4990, status: 'available' }, spot: { first: 5000 + i, min: 4999 + i, max: 5001 + i, last: 5000.5 + i } });
+      }
+      if (asOf) exposure[exposure.length - 1].as_of = asOf;
+      return { symbols: () => [{ symbol: 'SPY', last_bar: barsTo }], bars: () => ({ bars }),
+        charts: (s, res, from, to, q) => ({ layers: {}, exposure: q.layers.includes('exposure') ? exposure : undefined }) };
+    }
+    // 12:02 ET: the 11:55 bar closed 2 minutes ago, the session is trading.
+    async function legendAt(cfg) {
+      mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-11-13T17:02:00Z') });
+      try {
+        const el = host();
+        const { chart } = open(el, { symbol: 'SPY', resolution: '5m', source: liveSource(cfg), layers: ['levels'] });
+        await tick();
+        const text = el.querySelector('.fac-legend').textContent;
+        chart.destroy();
+        return text;
+      } finally { mock.timers.reset(); }
+    }
+
+    it('says when the newest levels were computed', async () => {
+      const text = await legendAt({ barsTo: '2026-11-13T16:55:00Z', rowsTo: '2026-11-13T16:55:00Z', asOf: '2026-11-13T16:59:50Z' });
+      assert.match(text, /Gamma flip 4,990\.00 \([^)]*\)As of 11:59 ET/);
+      assert.doesNotMatch(text, /delayed|⚠/);
+    });
+
+    it('marks levels computed more than 10 minutes before the newest bar as delayed, first on the line', async () => {
+      const text = await legendAt({ barsTo: '2026-11-13T16:55:00Z', rowsTo: '2026-11-13T16:55:00Z', asOf: '2026-11-13T16:40:00Z' });
+      assert.match(text, /GEX LevelsSpot [\d,.]+( \([^)]*\))?As of 11:40 ET \(delayed 15 min\)Call wall/);
+    });
+
+    it('says so on its own line when the levels stopped before the newest bar', async () => {
+      const text = await legendAt({ barsTo: '2026-11-13T16:55:00Z', rowsTo: '2026-11-13T16:30:00Z' });
+      assert.match(text, /⚠ GEX levels delayed 25 min: last update 11:30 ET/);
+    });
   });
 
   it('without a key every paid layer is locked, like the free plan', async () => {
@@ -948,6 +1030,35 @@ describe('indicators', () => {
       assert.equal(opened[0][1], '_blank');
     } finally { window.open = realOpen; }
     c2.destroy();
+  });
+
+  it('links to the page\'s own site carry no utm tags; Sign up and Upgrade tell the page (flashalpha:upgrade)', async () => {
+    const el = host();
+    const { chart } = open(el, { source: fakeSource({ plan: 'free' }), upgradeUrl: '/pricing?returnUrl=%2Fstock%2Fspy', signupUrl: '/pricing' });
+    await tick();
+    const heard = [];
+    el.addEventListener('flashalpha:upgrade', e => heard.push(e.detail));
+    const lock = ind(el).querySelector('a.fac-lock');
+    assert.equal(lock.href, 'https://example.com/pricing?returnUrl=%2Fstock%2Fspy', 'same site: no utm');
+    lock.addEventListener('click', e => e.preventDefault());
+    lock.click();
+    assert.deepEqual(heard[0], { campaign: 'upgrade', content: 'levels', href: lock.href, symbol: chart.symbol });
+    const account = el.querySelector('.fac-account');
+    account.addEventListener('click', e => e.preventDefault());
+    account.click();
+    assert.equal(heard[1].campaign, 'upgrade');
+    assert.equal(heard[1].content, 'account');
+    // a prompt that is not a link (the switch of an indicator whose every layer is locked) is heard too
+    const opened = [], realOpen = window.open;
+    window.open = (...a) => { opened.push(a); return null; };
+    try {
+      const sw = ind(el).querySelector('[data-group]');
+      sw.checked = true;
+      sw.dispatchEvent(new window.Event('change'));
+      assert.equal(opened[0][0], 'https://example.com/pricing?returnUrl=%2Fstock%2Fspy');
+      assert.deepEqual(heard[2], { campaign: 'upgrade', content: 'levels', href: opened[0][0], symbol: chart.symbol });
+    } finally { window.open = realOpen; }
+    chart.destroy();
   });
 
   it('switches a whole indicator off and back on', async () => {
@@ -1198,7 +1309,7 @@ describe('layer plugins', () => {
     assert.equal(el.querySelector('.fac-dialog .fac-field span').textContent, 'Lens');
     assert.equal(el.querySelector('.fac-dialog .fac-dlg-hint'), null, 'one layer: no "every layer" hint');
     el.querySelector('.fac-dialog [data-ok]').click();
-    assert.match(el.querySelector('.fac-legend').textContent, /Gamma flip 4,990\.00 \(−1\.7%\)Test layerextra/, 'a line per indicator');
+    assert.match(el.querySelector('.fac-legend').textContent, /Gamma flip 4,990\.00 \(−1\.7%\)As of \d{1,2}:\d\d ETTest layerextra/, 'a line per indicator');
     assert.match(el.querySelector('.fac-legend').textContent, /test line/);
     assert.equal(chart.ping(), 'pong');
     assert.ok(chart.reload() instanceof Promise, 'a plugin method never replaces a core one');
@@ -1263,7 +1374,7 @@ describe('layer plugins', () => {
     const el2 = host();
     const c2 = open(el2, { source: fakeSource({ plan: 'alpha' }), layers: ['levels', 'vwap2'] }).chart;
     await tick();
-    assert.match(el2.querySelector('.fac-legend .lv').textContent, /Gamma flip 4,990\.00 \(−1\.7%\)VWAP 4,321\.00/, 'in the indicator\'s legend line');
+    assert.match(el2.querySelector('.fac-legend .lv').textContent, /Gamma flip 4,990\.00 \(−1\.7%\)As of \d{1,2}:\d\d ETVWAP 4,321\.00/, 'in the indicator\'s legend line');
     c2.destroy();
   });
 

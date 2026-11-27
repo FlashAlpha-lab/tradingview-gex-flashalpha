@@ -292,8 +292,8 @@ export function createLegend(view, chart) {
     const gatedLine = !gatedNames.length ? ''
       : `<div class="sub fac-lg-gated">Not in your plan: ${esc(gatedNames.join(', '))} `
         + (view.state.noKey
-          ? `<a class="fac-lg-up" href="${esc(view.signupHref('legend'))}" target="_blank" rel="noopener">Sign up</a>`
-          : `<a class="fac-lg-up" href="${esc(view.upgradeHref('legend'))}" target="_blank" rel="noopener">Upgrade</a>`) + '</div>';
+          ? `<a class="fac-lg-up" href="${esc(view.signupHref('legend'))}" ${view.ctaAttrs('legend', 'signup')} target="_blank" rel="noopener">Sign up</a>`
+          : `<a class="fac-lg-up" href="${esc(view.upgradeHref('legend'))}" ${view.ctaAttrs('legend')} target="_blank" rel="noopener">Upgrade</a>`) + '</div>';
     lines.push(...extra.filter(x => !isGated(x)));
     // The notes are the load's, not the bar's: shown wherever the pointer is.
     const notes = data.notes.filter(x => !isGated(x));

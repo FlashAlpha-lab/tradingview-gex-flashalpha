@@ -1,6 +1,6 @@
 {
   "name": "tradingview-gex-flashalpha",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "TradingView-style candlestick chart with options gamma exposure (GEX) levels: call wall, put wall, gamma flip, max pain, plus FlashAlpha indicators such as net GEX, the strike heatmap and the GEX profile. Built on TradingView Lightweight Charts, data from the FlashAlpha API.",
   "keywords": [
     "options",

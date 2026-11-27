@@ -333,8 +333,10 @@ export interface PluginContext {
     gated(apiLayer: string): boolean;
     /** True when the key's plan is below `plan`. */
     lockedPlan(plan: Plan | string): boolean;
-    /** The upgrade link, tagged with utm parameters. */
+    /** The upgrade link, tagged with utm parameters (not when it is on the page's own site). */
     upgradeHref(what?: string): string;
+    /** Opens the upgrade page in a new tab, for a prompt that is not a link; the page hears `flashalpha:upgrade`. */
+    openUpgrade(what?: string): void;
     readonly plan: Plan | string | null;
     readonly candles: ISeriesApi<'Candlestick'> | null;
     /** The drawn bars, each with its chart `time`. */

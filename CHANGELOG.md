@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.2.0 — 2026-11-27
+
+- Sign up and Upgrade links to the page's own site (`upgradeUrl` / `signupUrl` on the page's host, `www.` or not) no
+  longer carry `utm_source=chart` tags, which replaced the reader's own traffic source there. Links to another site keep
+  them.
+- New event **`flashalpha:upgrade`** on the container (it bubbles) when the reader follows a Sign up or Upgrade link or
+  prompt, including the prompts that open the pricing page without a link (an indicator whose every layer is locked, a
+  locked option); `event.detail` is `{ campaign, content, href, symbol }`. Plugins: `ctx.openUpgrade(what)` opens the
+  upgrade page and sends it.
+- **How fresh the levels are:** the GEX Levels legend ends with `As of 11:59 ET`, the time the newest levels were
+  computed (the row's `as_of`). While a session trades, levels more than 10 minutes behind the newest regular-hours
+  candle, or from the previous session, turn amber and go first on the line (`As of 11:40 ET (delayed 15 min)`); levels
+  that stopped before the newest candle get a line of their own (`⚠ GEX levels delayed 25 min: last update 11:30 ET`).
+  A past session is not checked.
+- New event **`flashalpha:change`** on the container (it bubbles) after the symbol, interval, range, session or layers
+  changed, by the reader or by a method; `event.detail` is `{ symbol, resolution, range, session, layers }`. In a layout
+  each chart sends its own.
+- Without a key, the box over the chart (`upsell: true`) says **Sign up free** and links to `signupUrl`, like the legend's
+  "Not in your plan" line (it said Upgrade).
+- Level events are measured against the levels the chart draws: on settled open interest each session's levels from
+  the open, so a wall no longer "moves" every few minutes; on live open interest a level moves once the new strike has
+  held for 5 minutes (chart API).
+
 ## 1.1.0 — 2026-11-25
 
 - **Level events** (FlashAlpha layer `events`, Growth) is released: markers on the candles where the price was rejected
