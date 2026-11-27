@@ -68,6 +68,7 @@ chart API with your FlashAlpha API key.
 - [8. Level events](#8-level-events)
 - [9. 0DTE hedging flow](#9-0dte-hedging-flow)
 - [Chart features](#chart-features)
+- [Which symbols are covered?](#which-symbols-are-covered)
 - [Which plan unlocks which indicator?](#which-plan-unlocks-which-indicator)
 - [Add the chart to your site in one line](#add-the-chart-to-your-site-in-one-line)
 - [Install from npm](#install-from-npm)
@@ -347,6 +348,42 @@ The indicators run on a full TradingView-style chart:
 - **Framework-free:** plain JavaScript for React, Vue, Angular, Svelte or a single HTML page. Its CSS never restyles your
   page (every rule sits under its own `fac-` classes).
 - **npm package:** ES module, CommonJS and script-tag builds, a separate style sheet, and TypeScript declarations.
+
+---
+
+## Which symbols are covered?
+
+The chart draws the symbols that the FlashAlpha chart API lists at `GET https://charts.flashalpha.com/v1/symbols`.
+Symbols are added over time, so read the list at run time instead of copying the table below.
+
+On 2026-11-27 the list had 57 symbols: 56 US stocks and ETFs, and the SPX index.
+
+| Group | Symbols |
+|---|---|
+| Index and ETFs (17) | SPX, SPY, QQQ, IWM, DIA, TQQQ, SQQQ, SOXL, SMH, XLK, XLF, XLE, XOP, KRE, KWEB, EEM, ARKK |
+| Bond and commodity ETFs (6) | TLT, HYG, GLD, SLV, GDX, USO |
+| Technology stocks (20) | AAPL, MSFT, NVDA, TSLA, AMZN, GOOG, GOOGL, META, NFLX, AMD, AVGO, INTC, MU, TSM, SMCI, PANW, MDB, MSTR, PYPL, BABA |
+| Other stocks (14) | T, F, WMT, COST, UNH, LLY, PFE, LMT, CAT, DE, BAC, AAL, GME, AMC |
+
+How far back the bars go (each symbol's `first_bar` in `/v1/symbols`):
+
+- **From 2017-01-03:** SPX, SPY, QQQ, IWM, SMH, TLT, AAPL, MSFT, NVDA, TSLA, AMZN, GOOG, GOOGL, NFLX, AMD, INTC, MSTR
+  and T.
+- **From 2018-01-02:** 38 symbols, all except the 18 above and META.
+- **From 2022-01-31:** META.
+
+To check a symbol before you mount the chart:
+
+```js
+const listed = await fetch('https://charts.flashalpha.com/v1/symbols').then(r => r.json());
+if (listed.some(s => s.symbol === 'SPY')) {
+  mount(el, { lightweightCharts: LightweightCharts, baseUrl: 'https://charts.flashalpha.com', apiKey: 'YOUR_FLASHALPHA_API_KEY', symbol: 'SPY' });
+}
+```
+
+A symbol that isn't on the list gets `404 unknown_symbol`. The chart shows a message, dispatches `flashalpha:nodata`
+with `error: 'unknown_symbol'` and doesn't poll that symbol again. To show another chart in its place, listen for that
+event (see [Events](#events)).
 
 ---
 
@@ -947,7 +984,7 @@ points to larger, trending moves.
 
 **Which symbols are supported?**
 US stocks, ETFs and indices that the FlashAlpha chart API lists (`/v1/symbols`), such as SPX, SPY, QQQ, AAPL, MSFT and
-TSLA.
+TSLA: 57 symbols on 2026-11-27. The full list is under [Which symbols are covered?](#which-symbols-are-covered).
 
 **Which timeframes are supported?**
 1-minute, 5-minute, 15-minute, 1-hour, daily and weekly bars, with regular or extended trading hours. GEX levels are drawn
