@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.1 — 2026-11-27
+
+- README: new section **Which symbols are covered?** with the symbols the chart API lists, how far back their bars go,
+  and how to check a symbol before you mount the chart.
+- Shorter package description, so npm shows all of it.
+- README links and images point at the GitHub repository, so they work wherever the README is shown (npm, unpkg,
+  jsDelivr).
+- README and llms.txt link the sister package [@flashalpha-lab/gex-charts](https://www.npmjs.com/package/@flashalpha-lab/gex-charts),
+  a GEX by strike chart.
+
+No code changes.
+
 ## 1.2.0 — 2026-11-27
 
 - Sign up and Upgrade links to the page's own site (`upgradeUrl` / `signupUrl` on the page's host, `www.` or not) no

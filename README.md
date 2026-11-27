@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://flashalpha.com/?utm_source=github&utm_medium=readme&utm_campaign=tradingview-gex-flashalpha">
-    <img src="assets/flashalpha-logo.png" alt="FlashAlpha" width="140">
+    <img src="https://raw.githubusercontent.com/FlashAlpha-lab/tradingview-gex-flashalpha/main/assets/flashalpha-logo.png" alt="FlashAlpha" width="140">
   </a>
 </p>
 
@@ -13,14 +13,14 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/tradingview-gex-flashalpha"><img src="https://img.shields.io/npm/v/tradingview-gex-flashalpha.svg" alt="npm version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+  <a href="https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
   <a href="https://github.com/tradingview/lightweight-charts"><img src="https://img.shields.io/badge/Lightweight%20Charts-5.3.0-26a69a.svg" alt="Built on TradingView Lightweight Charts 5.3.0"></a>
   <img src="https://img.shields.io/badge/types-TypeScript-blue" alt="TypeScript types">
   <img src="https://img.shields.io/badge/data-FlashAlpha%20API-4f8cff.svg" alt="Data from the FlashAlpha API">
 </p>
 
 <p align="center">
-  <img src="assets/gex-levels-walls-gamma-flip.png" alt="SPY 1-hour candlestick chart with FlashAlpha GEX Levels: call wall, put wall, gamma flip and max pain lines, the gamma regime tint behind the candles and a net GEX pane under the price" width="900">
+  <img src="https://raw.githubusercontent.com/FlashAlpha-lab/tradingview-gex-flashalpha/main/assets/gex-levels-walls-gamma-flip.png" alt="SPY 1-hour candlestick chart with FlashAlpha GEX Levels: call wall, put wall, gamma flip and max pain lines, the gamma regime tint behind the candles and a net GEX pane under the price" width="900">
 </p>
 
 <p align="center">
@@ -114,15 +114,15 @@ The levels are model estimates from open interest, not observed dealer positions
 
 | Indicator | What it draws | Main benefit | Lowest plan |
 |---|---|---|---|
-| [GEX Levels](docs/indicators/gex-levels.md) | Call wall, put wall, gamma flip and max pain lines, the 0DTE magnet, the gamma regime tint and the previous session's levels | Key support, resistance and regime levels from options positioning, right on the price | Basic |
-| [Net GEX](docs/indicators/net-gex.md) | Net dealer gamma in dollars as a line around zero in a pane under the price | See at a glance when dealers switch from dampening to amplifying moves | Basic |
-| [Strike heatmap and GEX profile](docs/indicators/gex-by-strike.md) | Net GEX per strike behind the candles, and as bars at the right edge; each can show delta, vanna or charm instead | Find the strikes that attract, stall or accelerate the price | Growth |
-| [Expiry heatmap](docs/indicators/expiry-heatmap.md) | A strike × expiration grid in a panel beside the chart, with totals per strike and per expiration | Know which expiry a wall comes from, and what each expiration takes away | Growth |
-| [Greeks and 0DTE metrics](docs/indicators/metrics-pane.md) | A pane for delta, vanna or charm exposure, or a 0DTE metric such as pin score, IV ratio, VIX or dealer hedge per ±1 % | Track the forces behind the levels, minute by minute | Basic (Greeks), Growth (metrics) |
-| [0DTE scope and live OI](docs/indicators/0dte-and-live-oi.md) | The same indicators computed on today's expiry only, or on open interest updated with today's flow | Same-day options context for 0DTE traders | Growth (0DTE), Alpha (live OI) |
-| [Expected move](docs/indicators/expected-move.md) | The options-implied 1σ range of each session from its open, green above and red below | The range the options market expects today, and how often the price stayed inside it | Growth |
-| [Level events](docs/indicators/level-events.md) | Markers where the price was rejected at a level, broke it or crossed the flip; regime flips; OPEX, earnings and OI change days | See which levels held and which broke, as it happened | Growth |
-| [0DTE hedging flow](docs/indicators/0dte-hedging-flow.md) | The stock dealers had to buy or sell since the open to hedge today's 0DTE trades, in a pane under the price | Who is pushing the price, and whether a move has hedging behind it | Growth |
+| [GEX Levels](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-levels.md) | Call wall, put wall, gamma flip and max pain lines, the 0DTE magnet, the gamma regime tint and the previous session's levels | Key support, resistance and regime levels from options positioning, right on the price | Basic |
+| [Net GEX](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/net-gex.md) | Net dealer gamma in dollars as a line around zero in a pane under the price | See at a glance when dealers switch from dampening to amplifying moves | Basic |
+| [Strike heatmap and GEX profile](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-by-strike.md) | Net GEX per strike behind the candles, and as bars at the right edge; each can show delta, vanna or charm instead | Find the strikes that attract, stall or accelerate the price | Growth |
+| [Expiry heatmap](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/expiry-heatmap.md) | A strike × expiration grid in a panel beside the chart, with totals per strike and per expiration | Know which expiry a wall comes from, and what each expiration takes away | Growth |
+| [Greeks and 0DTE metrics](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/metrics-pane.md) | A pane for delta, vanna or charm exposure, or a 0DTE metric such as pin score, IV ratio, VIX or dealer hedge per ±1 % | Track the forces behind the levels, minute by minute | Basic (Greeks), Growth (metrics) |
+| [0DTE scope and live OI](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/0dte-and-live-oi.md) | The same indicators computed on today's expiry only, or on open interest updated with today's flow | Same-day options context for 0DTE traders | Growth (0DTE), Alpha (live OI) |
+| [Expected move](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/expected-move.md) | The options-implied 1σ range of each session from its open, green above and red below | The range the options market expects today, and how often the price stayed inside it | Growth |
+| [Level events](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/level-events.md) | Markers where the price was rejected at a level, broke it or crossed the flip; regime flips; OPEX, earnings and OI change days | See which levels held and which broke, as it happened | Growth |
+| [0DTE hedging flow](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/0dte-hedging-flow.md) | The stock dealers had to buy or sell since the open to hedge today's 0DTE trades, in a pane under the price | Who is pushing the price, and whether a move has hedging behind it | Growth |
 
 Every indicator above is in the chart's **Indicators** menu, whatever your plan; the metrics pane is a
 setting of Net GEX, the 0DTE scope and live open interest are settings of GEX Levels. A layer above your plan shows a
@@ -161,14 +161,14 @@ The core indicator. It draws the levels options traders watch most, bar by bar t
 - **Session focus.** Hover a session and the other sessions fade, so one day's levels and candles stand out.
 - **Your colours.** Colour, width, line style, price line and axis label per level, like TradingView's Style tab.
 
-Read more: [GEX Levels](docs/indicators/gex-levels.md).
+Read more: [GEX Levels](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-levels.md).
 
 ---
 
 ## 2. Net GEX pane
 
 <p align="center">
-  <img src="assets/gex-strike-heatmap-net-gex-pane.png" alt="Net GEX pane under a SPY 1-hour chart: net dealer gamma exposure in dollars, green above zero and red below zero, with the strike heatmap behind the candles" width="900">
+  <img src="https://raw.githubusercontent.com/FlashAlpha-lab/tradingview-gex-flashalpha/main/assets/gex-strike-heatmap-net-gex-pane.png" alt="Net GEX pane under a SPY 1-hour chart: net dealer gamma exposure in dollars, green above zero and red below zero, with the strike heatmap behind the candles" width="900">
 </p>
 
 Net dealer gamma exposure in dollars, drawn as a line around zero in its own pane under the price: green above zero,
@@ -181,14 +181,14 @@ red below.
 - **Change since the previous session** in the legend, for example `Net GEX −$5.49B (+$3.80B)`.
 - **Sessions kept apart.** The line is cut between sessions, and hovering a session fades the others.
 
-Read more: [Net GEX](docs/indicators/net-gex.md).
+Read more: [Net GEX](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/net-gex.md).
 
 ---
 
 ## 3. Strike heatmap and GEX profile
 
 <p align="center">
-  <img src="assets/gex-by-strike-heatmap-profile.png" alt="SPY 1-hour chart with the strike heatmap and the GEX profile: net GEX per strike as a heatmap behind the candles and as horizontal bars at the right edge, green for long gamma strikes and red for short gamma strikes" width="900">
+  <img src="https://raw.githubusercontent.com/FlashAlpha-lab/tradingview-gex-flashalpha/main/assets/gex-by-strike-heatmap-profile.png" alt="SPY 1-hour chart with the strike heatmap and the GEX profile: net GEX per strike as a heatmap behind the candles and as horizontal bars at the right edge, green for long gamma strikes and red for short gamma strikes" width="900">
 </p>
 
 The full options positioning by strike, on the price axis, in two indicators.
@@ -209,14 +209,14 @@ The full options positioning by strike, on the price axis, in two indicators.
 - **One chart, four Greeks.** Vanna shows sensitivity to implied volatility, charm the drift into the close, delta the
   directional hedge.
 
-Read more: [Strike heatmap and GEX profile](docs/indicators/gex-by-strike.md).
+Read more: [Strike heatmap and GEX profile](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/gex-by-strike.md).
 
 ---
 
 ## 4. Greeks exposure and 0DTE metrics pane
 
 <p align="center">
-  <img src="assets/0dte-magnet-atm-iv-pane.png" alt="SPY 1-hour chart with the 0DTE magnet on the candles, the net GEX pane and a 0DTE ATM IV metric pane under it" width="900">
+  <img src="https://raw.githubusercontent.com/FlashAlpha-lab/tradingview-gex-flashalpha/main/assets/0dte-magnet-atm-iv-pane.png" alt="SPY 1-hour chart with the 0DTE magnet on the candles, the net GEX pane and a 0DTE ATM IV metric pane under it" width="900">
 </p>
 
 A pane under the price for one exposure or metric, minute by minute. Pick it in the **Metric pane** setting of the Net GEX
@@ -237,7 +237,7 @@ indicator.
 **Benefits:** the forces behind the levels, on the same time axis as the price. Spot a rising pin score into the
 afternoon, a vanna build before an event, or a hedge estimate that grows as the price nears the flip.
 
-Read more: [Greeks and 0DTE metrics](docs/indicators/metrics-pane.md).
+Read more: [Greeks and 0DTE metrics](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/metrics-pane.md).
 
 ---
 
@@ -252,7 +252,7 @@ Two settings in the options of GEX Levels change what every indicator is compute
 **Benefits:** same-day options now drive a large share of index volume. The 0DTE scope shows the levels that matter
 **today**, and live open interest keeps them current as new positions open.
 
-Read more: [0DTE scope and live OI](docs/indicators/0dte-and-live-oi.md).
+Read more: [0DTE scope and live OI](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/0dte-and-live-oi.md).
 
 ---
 
@@ -271,7 +271,7 @@ the week's.
   to +1σ and −1σ.
 - **Pairs with the GEX levels.** A test of +1σ under positive gamma often stalls; under negative gamma it often breaks.
 
-Read more: [Expected move](docs/indicators/expected-move.md).
+Read more: [Expected move](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/expected-move.md).
 
 ---
 
@@ -288,7 +288,7 @@ a row per strike and a column per expiration, each cell coloured by its net GEX,
   price and the gamma flip.
 - **At hand.** Lens, strikes shown (20, 30 or 50) and values in cells in the panel's header; fold the panel to a tab.
 
-Read more: [Expiry heatmap](docs/indicators/expiry-heatmap.md).
+Read more: [Expiry heatmap](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/expiry-heatmap.md).
 
 ---
 
@@ -307,7 +307,7 @@ interest change.
 - **Hover a bar** for its events, the minute of each and the wall's strength.
 - **Breaks with context:** with the 0DTE hedging flow on, a break says whether the flow went with the move or against it.
 
-Read more: [Level events](docs/indicators/level-events.md).
+Read more: [Level events](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/level-events.md).
 
 ---
 
@@ -323,7 +323,7 @@ the options on today's expiry traded today, in a pane under the price, with the 
 - **Calls and puts.** The two legs of the total, on request.
 - **Comparable across symbols.** In **% move** units the flow is set against the session's 0DTE gamma.
 
-Read more: [0DTE hedging flow](docs/indicators/0dte-hedging-flow.md).
+Read more: [0DTE hedging flow](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/indicators/0dte-hedging-flow.md).
 
 ---
 
@@ -419,7 +419,7 @@ and daily request limits are on the
 ```
 
 The script loads Lightweight Charts, the chart and the FlashAlpha indicators from the chart host, then draws every
-element that has `data-flashalpha-chart`. A full page is in [`examples/embed.html`](examples/embed.html). If your page
+element that has `data-flashalpha-chart`. A full page is in [`examples/embed.html`](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/examples/embed.html). If your page
 adds charts after it loads, for example in a single-page app, call `FlashAlphaEmbed.scan()`.
 
 | Layer ID for `data-layers` | Indicator |
@@ -651,7 +651,7 @@ onBeforeUnmount(() => chart?.destroy());
 
 Call `mount(element, options)` after the element is in the DOM, and `chart.destroy()` when the component is destroyed.
 
-More examples are in [`examples/`](examples): a basic page, the one-line embed, and your own data source.
+More examples are in [`examples/`](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/tree/main/examples): a basic page, the one-line embed, and your own data source.
 
 ---
 
@@ -844,7 +844,7 @@ An API key placed in browser code can be read by anyone who opens the page.
 
 - **Personal or internal pages:** pass `apiKey` directly.
 - **Public websites:** use an **embed key** (`fa_pk_…`): made from your secret key on your server, read-only, chart data
-  only, locked to your domains, with an expiry. See [Embed keys](docs/embed-keys.md). Or keep the key on your server and
+  only, locked to your domains, with an expiry. See [Embed keys](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/embed-keys.md). Or keep the key on your server and
   set `baseUrl` to a small proxy that adds the `X-Api-Key` header to the requests it forwards to the chart API.
 
 The chart sends the key only in the `X-Api-Key` header. It never stores the key or writes it to the URL.
@@ -889,8 +889,8 @@ const mySource = {
 - To lock layers by plan, return `plan` (`free`, `basic`, `growth`, `alpha`) from `charts`; layer plugins declare the
   plan each layer needs with `plans: { id: 'growth' }`.
 
-For a complete page, open [`examples/custom-source.html`](examples/custom-source.html) in a browser. The FlashAlpha chart
-API itself is described in the [chart API reference](docs/api.md).
+For a complete page, open [`examples/custom-source.html`](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/examples/custom-source.html) in a browser. The FlashAlpha chart
+API itself is described in the [chart API reference](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/api.md).
 
 ## Add layers
 
@@ -942,9 +942,9 @@ A plugin has these fields:
 `ctx.setQuery({...})` adds parameters to the chart API request and reloads; called inside `attach` it only sets the
 first request. A series that a plugin adds in a new pane under the price gets a fifth of the chart's height.
 
-`ctx.exposure` has the exposure rows of the last load on bar times. [Layer plugins](docs/plugins.md) describes `ctx`
+`ctx.exposure` has the exposure rows of the last load on bar times. [Layer plugins](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/plugins.md) describes `ctx`
 and the handle in full. The core layers `levels` and `maxpain` are a plugin too:
-[`src/plugins/levels.js`](src/plugins/levels.js).
+[`src/plugins/levels.js`](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/src/plugins/levels.js).
 
 ---
 
@@ -1022,7 +1022,7 @@ No. They are model estimates from open interest, not observed dealer positions, 
 
 **Where can I get help?**
 Open an issue at https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/issues, or see the
-[chart API reference](docs/api.md).
+[chart API reference](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/docs/api.md).
 
 ---
 
@@ -1037,6 +1037,8 @@ that data on a price chart.
 - [GEX exposure API](https://flashalpha.com/docs/lab-api-exposure?utm_source=github&utm_medium=readme&utm_campaign=tradingview-gex-flashalpha)
 - [Pricing and free API key](https://flashalpha.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=tradingview-gex-flashalpha)
 - [Free GEX tool](https://flashalpha.com/tools/gamma-exposure?utm_source=github&utm_medium=readme&utm_campaign=tradingview-gex-flashalpha)
+- [@flashalpha-lab/gex-charts](https://www.npmjs.com/package/@flashalpha-lab/gex-charts): an interactive GEX by strike
+  chart for stocks, ETFs, indices and futures, built on Apache ECharts.
 - [flashalpha-js](https://github.com/FlashAlpha-lab/flashalpha-js): JavaScript and TypeScript SDK.
 - [flashalpha-python](https://github.com/FlashAlpha-lab/flashalpha-python): Python SDK.
 - [flashalpha-mcp](https://github.com/FlashAlpha-lab/flashalpha-mcp): MCP server for Claude, Cursor and other AI assistants.
@@ -1115,7 +1117,7 @@ The chart supports current versions of Chrome, Edge, Firefox, and Safari on desk
 
 ## License, trademarks and disclaimer
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](https://github.com/FlashAlpha-lab/tradingview-gex-flashalpha/blob/main/LICENSE).
 
 The chart loads [TradingView Lightweight Charts™](https://github.com/tradingview/lightweight-charts) at run time; the
 npm package doesn't include its source code. `npm run build` puts an unmodified copy in `dist/vendor/`, with its LICENSE

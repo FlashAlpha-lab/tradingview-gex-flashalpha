@@ -35,6 +35,7 @@ Plans: Free = candles and volume. Basic = GEX Levels (call wall, put wall, gamma
 - [Exposure API (GEX)](https://flashalpha.com/docs/lab-api-exposure)
 - [Pricing and free API key](https://flashalpha.com/pricing)
 - [Free GEX tool](https://flashalpha.com/tools/gamma-exposure)
+- [@flashalpha-lab/gex-charts](https://www.npmjs.com/package/@flashalpha-lab/gex-charts): interactive GEX by strike chart for stocks, ETFs, indices and futures, built on Apache ECharts
 - [gex-explained](https://github.com/FlashAlpha-lab/gex-explained): theory and math behind GEX
 - [flashalpha-js](https://github.com/FlashAlpha-lab/flashalpha-js): JavaScript and TypeScript SDK for the FlashAlpha API
 - [flashalpha-python](https://github.com/FlashAlpha-lab/flashalpha-python): Python SDK for the FlashAlpha API
